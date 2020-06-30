@@ -25,12 +25,13 @@ class ChartComponent extends React.Component {
       .draw();
 
     // Use it again.
-    setTimeout(() => {
-      this.chart
-        // .data([20, 34, 48, 60])
-        // .props({ fill: base.orange.hex })
-        .draw();
-    }, 4000);
+    // setTimeout(() => {
+    //   this.chart
+    //   .selection(this.chartContainer.current)
+    //     // .data([20, 34, 48, 60])
+    //     .props({ height: 250 })
+    //     .draw();
+    // }, 4000);
     // setTimeout(() => {
     //   this.chart
     //     // .data([30, 50, 30])
