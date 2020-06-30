@@ -4,4 +4,20 @@
   .domain{
   	display: none;
   }
+  .axis{
+  	text{
+  		font-family: $font-family-sans-serif;
+  		fill: #999;
+  		font-size: .8rem;
+  	}
+  	line{
+  		stroke-width: .7;
+  		stroke: #999;
+  	}
+  }
+  
+  .bar.active{
+  	fill: #ddd!important
+  }
 }
+

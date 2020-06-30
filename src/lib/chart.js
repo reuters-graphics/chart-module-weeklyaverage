@@ -9,12 +9,13 @@ let dateFormat = d3.timeFormat("%b %e");
 class WeeklyAverage extends ChartComponent {
   defaultProps = {
     stroke: 'steelblue',
-    strokeWidth: 2,
+    strokeWidth: 2.5,
     fill: '#eee',
     height: 400,
     avg_days: 7,
     annotations: [],
     population: false,
+    padding: .1,
     text:[
     {
       daily_cases: 'Daily cases',
@@ -56,7 +57,7 @@ class WeeklyAverage extends ChartComponent {
                     .round(false)
                     .range([0, width-margin.right-margin.left])
                     .domain(dateList)
-                    .padding(.1)
+                    .padding(props.padding)
 
     // y scale
     let scaleY = d3.scaleLinear()
@@ -68,13 +69,28 @@ class WeeklyAverage extends ChartComponent {
                   .x(d=>scaleX(dateParse(d.date)))
                   .y(d=>scaleY(d.mean?d.mean:0))
 
-    const bars = g.selectAll('rect')
+    g.appendSelect('g.axis--y')
+      .attr('class','axis--y axis')
+      .transition(transition)
+      .attr('transform',`translate(${width-margin.right-margin.left},0)`)
+      .call(d3.axisRight(scaleY).ticks(3).tickSize(-width+margin.left+margin.right))
+
+    g.appendSelect('g.axis--x')
+      .attr('class','axis--x axis')
+      .transition(transition)
+      .attr('transform',`translate(0,${props.height-margin.bottom-margin.top})`)
+      .call(d3.axisBottom(scaleX).tickValues([dateList[0],dateList[dateList.length-1]]).tickFormat(dateFormat))
+
+
+
+    const bars = g.appendSelect('g.bars-container')
+      // .append('g')
+      // .attr('class','bars-container')
+      .selectAll('.bar')
       .data(data, (d, i) => i);
 
-    bars
-      .style('fill', props.fill)
-
     bars.enter().append('rect')
+      .attr('class',d=>`bar d-${d.date.replace(/-/g,'')}`)
       .style('fill', props.fill)
       .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.count))
       .attr('x', (d,i)=>scaleX(dateParse(d.date)))
@@ -86,6 +102,30 @@ class WeeklyAverage extends ChartComponent {
       .attr('x', (d,i)=>scaleX(dateParse(d.date)))
       .attr('y', d=>scaleY(+d.count))
       .attr('width', scaleX.bandwidth())
+
+    const bars_dummy = g.appendSelect('g.dummy-container')
+      // .append('g')
+      .selectAll('.dummy')
+      .data(data, (d, i) => i);
+
+    bars_dummy.enter()
+      .append('rect')
+      .style('fill', 'white')
+      .attr('class','dummy')
+      .style('opacity',0)
+      .attr('height', d=>props.height)
+      .attr('x', (d,i)=>scaleX(dateParse(d.date)))
+      .attr('y', d=>0)
+      .attr('width', scaleX.bandwidth())
+      .on('mouseover',showTooltip)
+      .on('mouseout',hideTooltip)
+      .merge(bars_dummy)
+      .transition(transition)
+      .attr('height', d=>props.height)
+      .attr('x', (d,i)=>scaleX(dateParse(d.date)))
+      .attr('y', d=>0)
+      .attr('width', scaleX.bandwidth())
+
 
 
     // avg line
@@ -100,19 +140,21 @@ class WeeklyAverage extends ChartComponent {
           .attr('d',line)
           .attr('fill',"none")
           .attr('stroke',props.stroke)
-          .style('stroke-width',props.strokeWidth)
+          .attr('stroke-width',props.strokeWidth)
 
-    g.appendSelect('g.axis--y')
-      .attr('class','axis--y axis')
-      .transition(transition)
-      .attr('transform',`translate(${width-margin.right-margin.left},0)`)
-      .call(d3.axisRight(scaleY).ticks(4))
+  
+    function showTooltip(obj) {
+        d3.select(`.bar.d-${obj.date.replace(/-/g,"")}`)
+          .classed('active',true)
+        
+      }
 
-    g.appendSelect('g.axis--x')
-    .attr('class','axis--x axis')
-    .transition(transition)
-    .attr('transform',`translate(0,${props.height-margin.bottom-margin.top})`)
-    .call(d3.axisBottom(scaleX).tickValues([dateList[0],dateList[dateList.length-1]]).tickFormat(dateFormat))
+      function hideTooltip() {
+        d3.select('.active')
+          .classed('active',false)
+       
+      }
+
 
     return this;
   }
