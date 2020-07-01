@@ -257,7 +257,10 @@ class WeeklyAverage extends ChartComponent {
 
 
     // Annotations
-    if(props.annotations.length>0){
+    let annotation_check = g.selectAll('g.annotations-container').node()?true:false
+    
+    if(props.annotations.length>0 || annotation_check){
+
       let annotations_container = g.appendSelect('g.annotations-container')
                         .selectAll('.annotation')
                         .data(props.annotations, (d, i) => d.date);
@@ -265,7 +268,11 @@ class WeeklyAverage extends ChartComponent {
       let annotation = annotations_container.enter()
                                             .append('g')
                                             .attr('class','annotation')
-                                            .attr('transform',d=>`translate(${scaleX(dateParse(d.date))},0)`)
+                                            .attr('transform',d=>`translate(${scaleX(dateParse(d.date))},0)`)                       
+
+      annotations_container.merge(annotations_container)
+                          .transition(transition)
+                          .attr('transform',d=>`translate(${scaleX(dateParse(d.date))},0)`)                       
 
       annotation.appendSelect('line')
                 .attr('x1',0)
@@ -276,9 +283,9 @@ class WeeklyAverage extends ChartComponent {
       let text_container = annotation.appendSelect('g.text-container')
                                     .attr('transform',function(d){
                                         if (scaleX(dateParse(d.date))>(width/2)){
-                                          return `translate(-10,${props.height/6*1.5})`
+                                          return `translate(-8,${props.height/6*1.5})`
                                         } else{
-                                          return `translate(10,${props.height/6*4})`
+                                          return `translate(8,${props.height/6*4})`
                                         }
                                     })
                                     .attr('text-anchor',function(d){
@@ -288,6 +295,7 @@ class WeeklyAverage extends ChartComponent {
                                           return 'start'
                                         }
                                     })
+
         text_container.appendSelect('text.date')
                      .text(d=>dateFormat_tt(dateParse(d.date)))
 
@@ -296,7 +304,9 @@ class WeeklyAverage extends ChartComponent {
                       .text(d=>d.text)
                      // .text('')
                      // .tspans( function(d){return d3.wordwrap(d.text, linewrap)}, lineheight)
-               
+        
+        annotations_container.exit()
+            .remove();
     }
 
     return this;
