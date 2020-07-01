@@ -24,7 +24,8 @@ class WeeklyAverage extends ChartComponent {
     text:{
       daily_numbers: 'Daily new ',
       tooltip_suffix: ' new ',
-      avg:'-day average'
+      avg:'-day average',
+      per_pop: ' new cases per 100k people'
     }
   };
 
