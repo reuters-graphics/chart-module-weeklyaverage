@@ -7,6 +7,7 @@ let dateParse = d3.timeParse("%Y-%m-%d");
 let dateFormat = d3.timeFormat("%b %e");
 let dateFormat_tt = d3.timeFormat("%B %e");
 let numberFormat_tt = d3.format(",")
+var linewrap=18, font_siz=.8, lineheight=15
 
 class WeeklyAverage extends ChartComponent {
   defaultProps = {
@@ -86,7 +87,7 @@ class WeeklyAverage extends ChartComponent {
 
     const bars = g.appendSelect('g.bars-container')
       .selectAll('.bar')
-      .data(data, (d, i) => i);
+      .data(data, (d, i) => d.date); // for smooth data updation
 
     bars.enter().append('rect')
       .attr('class',d=>`bar d-${d.date.replace(/-/g,'')}`)
@@ -102,10 +103,14 @@ class WeeklyAverage extends ChartComponent {
       .attr('y', d=>scaleY(+d.count))
       .attr('width', scaleX.bandwidth())
 
+    bars.exit()
+      .transition(transition)
+      .attr('height', 0)
+      .remove();
+
     const bars_dummy = g.appendSelect('g.dummy-container')
-      // .append('g')
       .selectAll('.dummy')
-      .data(data, (d, i) => i);
+      .data(data, (d, i) => d.date);
 
     bars_dummy.enter()
       .append('rect')
@@ -125,8 +130,16 @@ class WeeklyAverage extends ChartComponent {
       .attr('y', d=>0)
       .attr('width', scaleX.bandwidth())
 
+    bars_dummy.exit()
+      .transition(transition)
+      .attr('height', 0)
+      .remove();
+
     bars_dummy.on('mouseover',showTooltip)
       .on('mouseout',hideTooltip)
+
+    
+
     // avg line
     const avg_line = g.selectAll('.avg-line')
                       .data([data])
@@ -240,6 +253,50 @@ class WeeklyAverage extends ChartComponent {
       }
 
       return l.join('');
+    }
+
+
+    // Annotations
+    if(props.annotations.length>0){
+      let annotations_container = g.appendSelect('g.annotations-container')
+                        .selectAll('.annotation')
+                        .data(props.annotations, (d, i) => d.date);
+      
+      let annotation = annotations_container.enter()
+                                            .append('g')
+                                            .attr('class','annotation')
+                                            .attr('transform',d=>`translate(${scaleX(dateParse(d.date))},0)`)
+
+      annotation.appendSelect('line')
+                .attr('x1',0)
+                .attr('x2',0)
+                .attr('y2',0)
+                .attr('y1',props.height-margin.top-margin.bottom)
+
+      let text_container = annotation.appendSelect('g.text-container')
+                                    .attr('transform',function(d){
+                                        if (scaleX(dateParse(d.date))>(width/2)){
+                                          return `translate(-10,${props.height/6*1.5})`
+                                        } else{
+                                          return `translate(10,${props.height/6*4})`
+                                        }
+                                    })
+                                    .attr('text-anchor',function(d){
+                                        if (scaleX(dateParse(d.date))>(width/2)){
+                                          return 'end'
+                                        } else{
+                                          return 'start'
+                                        }
+                                    })
+        text_container.appendSelect('text.date')
+                     .text(d=>dateFormat_tt(dateParse(d.date)))
+
+        text_container.appendSelect('text.text')
+                      .attr('dy',16)
+                      .text(d=>d.text)
+                     // .text('')
+                     // .tspans( function(d){return d3.wordwrap(d.text, linewrap)}, lineheight)
+               
     }
 
     return this;

@@ -16,6 +16,38 @@ d3.selection.prototype.moveToBack = function() {
   });
 };
 
+// d3 webpack functions
+// d3.selection.prototype.tspans = function(lines, lh) {
+//   return this.selectAll('tspan')
+//       .data(lines)
+//       .enter()
+//       .append('tspan')
+//       .text(function(d) { return d; })
+//       .attr('x', 0)
+//       .attr('dy', function(d,i) { return i ? lh || 15 : 0; });
+// };
+
+// d3.wordwrap = function(line, maxCharactersPerLine) {
+//   var w = line.split(' '),
+//       lines = [],
+//       words = [],
+//       maxChars = maxCharactersPerLine || 20,
+//       l = 0;
+//   w.forEach(function(d) {
+//       if (l+d.length > maxChars) {
+//           lines.push(words.join(' '));
+//           words.length = 0;
+//           l = 0;
+//       }
+//       l += d.length;
+//       words.push(d);
+//   });
+//   if (words.length) {
+//       lines.push(words.join(' '));
+//   }
+//   return lines;
+// };
+
 // ... and the important addition. ⬇️⬇️⬇️
 
 /**

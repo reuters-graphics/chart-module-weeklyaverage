@@ -1,8 +1,14 @@
 import Chart from '../lib/chart.js';
 import ChartContainer from './furniture/ChartContainer';
 import React from 'react';
+import d3 from '../lib/utils/d3';
 import { base } from '@reuters-graphics/style-color/dist/categorical';
 import debounce from 'lodash/debounce';
+let newDataRead
+d3.json('http://graphics.thomsonreuters.com/data/2020/coronavirus/global-tracker/countries/india/counts/cases.json')
+      .then(function(newdata){
+        newDataRead = newdata
+      })
 
 class ChartComponent extends React.Component {
   state = { width: '' };
@@ -14,25 +20,29 @@ class ChartComponent extends React.Component {
   // A resize function to redraw the chart.
   resize = debounce(() => { this.chart.draw(); }, 250);
 
+
   componentDidMount() {
     // Use our chart module.
     this.chart
       .selection(this.chartContainer.current)
+      // .data(newDataRead)
       .props({ annotations: [{
-        'date':'2020-07-03',
+        'date':'2020-05-03', //YYYY-MM-DD
         'text':'Test annotation'
       }],
       labels: true })
       .draw();
 
+    
+      // setTimeout(() => {
+      //   this.chart
+      //   .selection(this.chartContainer.current)
+      //     .data(newDataRead)
+      //     // .props({ height: 250 })
+      //     .draw();
+      // }, 4000);
     // Use it again.
-    // setTimeout(() => {
-    //   this.chart
-    //   .selection(this.chartContainer.current)
-    //     // .data([20, 34, 48, 60])
-    //     .props({ height: 250 })
-    //     .draw();
-    // }, 4000);
+    
     // setTimeout(() => {
     //   this.chart
     //     // .data([30, 50, 30])
