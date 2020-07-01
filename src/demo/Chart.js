@@ -21,7 +21,8 @@ class ChartComponent extends React.Component {
       .props({ annotations: [{
         'date':'2020-07-03',
         'text':'Test annotation'
-      }] })
+      }],
+      labels: true })
       .draw();
 
     // Use it again.

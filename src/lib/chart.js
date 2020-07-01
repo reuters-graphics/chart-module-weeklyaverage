@@ -5,6 +5,8 @@ import defaultData from './defaultData.json';
 
 let dateParse = d3.timeParse("%Y-%m-%d");
 let dateFormat = d3.timeFormat("%b %e");
+let dateFormat_tt = d3.timeFormat("%B %e");
+let numberFormat_tt = d3.format(",")
 
 class WeeklyAverage extends ChartComponent {
   defaultProps = {
@@ -15,12 +17,14 @@ class WeeklyAverage extends ChartComponent {
     avg_days: 7,
     annotations: [],
     population: false,
-    padding: .1,
-    text:[
-    {
-      daily_cases: 'Daily cases',
+    padding: 0,
+    labels: false,
+    variable_name: 'cases',
+    text:{
+      daily_numbers: 'Daily new ',
+      tooltip_suffix: ' new ',
       avg:'-day average'
-    }]
+    }
   };
 
   defaultData = defaultData;
@@ -30,15 +34,12 @@ class WeeklyAverage extends ChartComponent {
     const data = this.data();
     const props = this.props();
     const node = this.selection().node();
-    const margin = {left: 20, right: 60, top: 10, bottom: 30}
+    const margin = {left: 20, right: 50, top: 10, bottom: 30}
     
     data.forEach(function(d,i){
-      // if (d.date.match('-')){
-      //   d.date = dateParse(d.date) // parse date  
-      // }
       d.mean = d3.mean(data.slice((i-props.avg_days),i),d=>+d.count) // avg calc
     })
-    // data = data.sort((a, b) => b.date - a.date)
+
     const { width } = node.getBoundingClientRect();
     const transition = d3.transition()
       .duration(750);
@@ -84,8 +85,6 @@ class WeeklyAverage extends ChartComponent {
 
 
     const bars = g.appendSelect('g.bars-container')
-      // .append('g')
-      // .attr('class','bars-container')
       .selectAll('.bar')
       .data(data, (d, i) => i);
 
@@ -126,8 +125,8 @@ class WeeklyAverage extends ChartComponent {
       .attr('y', d=>0)
       .attr('width', scaleX.bandwidth())
 
-
-
+    bars_dummy.on('mouseover',showTooltip)
+      .on('mouseout',hideTooltip)
     // avg line
     const avg_line = g.selectAll('.avg-line')
                       .data([data])
@@ -142,19 +141,106 @@ class WeeklyAverage extends ChartComponent {
           .attr('stroke',props.stroke)
           .attr('stroke-width',props.strokeWidth)
 
-  
+
+    // LABELS
+    if (props.labels){
+      let label_container = g.appendSelect('g.labels')
+
+      // avg label
+      let avg_label = label_container.appendSelect('g.avg-label')
+                                      .attr('transform',`translate(${scaleX(dateParse(data[10].date))},${scaleY(data[10].mean)-props.height/20})`)
+
+      avg_label.appendSelect('line')
+                .attr('x1', 0)
+                .attr('x2', 0)
+                .attr('y1', props.height/20)
+                .attr('y2', 0)
+
+      avg_label.appendSelect('text')
+                .attr('dx',-10)
+                .attr('dy',-5)
+                .text(`${props.avg_days}${props.text.avg}`)
+
+      // new numbers label
+
+      // GET MAX
+
+      let max = d3.max(data, d=>d.count)
+      let max_var = data.filter(d=>d.count==max)[0]
+      let new_nos_label = label_container.appendSelect('g.new-nos-label')
+                                      .attr('transform',`translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.count)})`)
+
+      new_nos_label.appendSelect('line')
+                .attr('x1', -10)
+                .attr('x2', 0)
+                .attr('y1', 10)
+                .attr('y2', 10)
+
+      new_nos_label.appendSelect('text')
+                .style('text-anchor','end')
+                .attr('dx',-13)
+                .attr('dy',12)
+                .text(`${props.text.daily_numbers+props.variable_name}`)
+    }
+    // tooltip
+    let tooltipBox = this.selection()
+                          .appendSelect('div.custom-tooltip')
+
+    let tt_inner = tooltipBox.appendSelect('div.tooltip-inner')
+
     function showTooltip(obj) {
         d3.select(`.bar.d-${obj.date.replace(/-/g,"")}`)
           .classed('active',true)
         
+        let coords = []
+
+        coords[0]=scaleX(dateParse(obj.date))+margin.left+(scaleX.bandwidth()/2)
+        coords[1]=scaleY(obj.count)+margin.top
+
+        let q = getTooltipType(coords,[props.height,width])
+
+        tooltipBox.classed('tooltip-active',true)
+                  .classed(`tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se`,false)
+                  .style('left',`${coords[0]}px`)
+                  .style('top',`${coords[1]}px`)
+                  .classed(`tooltip-${q}`,true)
+
+        tt_inner.appendSelect('div.tt-header')
+                .text(dateFormat_tt(dateParse(obj.date)))
+
+         tt_inner.appendSelect('div.tt-row')
+                .text(numberFormat_tt(obj.count)+props.text.tooltip_suffix+props.variable_name)
       }
 
-      function hideTooltip() {
-        d3.select('.active')
-          .classed('active',false)
-       
+    function hideTooltip() {
+      d3.select('.bar.active')
+        .classed('active',false)
+
+      tooltipBox.classed('tooltip-active',false)
+     
+    }
+
+    function getTooltipType(coords, size){
+      let l = [];
+
+      let ns_threshold = size[1]<500 ? 4 : 2;
+
+      if (coords[1] > size[1] / ns_threshold) {
+        l.push('s');
+      } else {
+        l.push('n');
       }
 
+      if (coords[0] > size[0] / 2) {
+        l.push('e');
+      }
+
+      if (coords[0] < size[0] / 2) {
+        l.push('w');
+      }
+
+      return l.join('');
+    }
 
     return this;
   }
