@@ -1,91 +1,104 @@
+import React, { useEffect, useState } from 'react';
+
 import Chart from '../lib/chart.js';
 import ChartContainer from './furniture/ChartContainer';
-import React from 'react';
 import d3 from '../lib/utils/d3';
-import { base } from '@reuters-graphics/style-color/dist/categorical';
 import debounce from 'lodash/debounce';
-let newDataRead
+
+let newDataRead;
 d3.json('http://graphics.thomsonreuters.com/data/2020/coronavirus/global-tracker/countries/china/counts/cases.json')
-      .then(function(newdata){
-        newDataRead = newdata
-      })
+  .then(function(newdata) {
+    newDataRead = newdata;
+  });
 
-class ChartComponent extends React.Component {
-  state = { width: '' };
-  chartContainer = React.createRef();
+// Instantiate our chart class.
+const chart = new Chart();
 
-  // Instantiate and add our chart class to this component.
-  chart = new Chart();
+const ChartComponent = () => {
+  const chartContainer = React.createRef();
 
   // A resize function to redraw the chart.
-  resize = debounce(() => { this.chart.draw(); }, 250);
+  const handleResize = debounce(() => { chart.draw(); }, 250);
 
+  // A "state" variable and the function to update it.
+  const [width, setWidth] = useState('');
+  const [option, setOption] = useState('');
 
-  componentDidMount() {
-    // Use our chart module.
-    this.chart
-      .selection(this.chartContainer.current)
-      // .data(newDataRead)
-      .props({
-        // population: 370000000,
-        labels: true, annotations:[
-            {
-              'date':'2020-02-12',
-              'text':'Hubei revises methodology',
-              'class':'hide-mobile'
-            },
-            {
-              'date':'2020-05-25',
-              'text':'Hubei revises methodology',
-              'class':'hide-desktop'
-            }]})
-      .draw();
+  // A resizer func.
+  useEffect(() => {
+    // This is run when the component first mounts
+    window.addEventListener('resize', handleResize);
+    // This is run when the component unmounts
+    return () => { window.removeEventListener('resize', handleResize); };
+  }, []); // This array says on run this when the component first mounts and when it unmounts
 
-    
-      // setTimeout(() => {
-      //   this.chart
-      //   .selection(this.chartContainer.current)
-      //     .data(newDataRead)
-      //     .props({ height: 250,labels: true,population:1700000000,annotations:[
-      //       {
-      //         'date':'2020-02-12',
-      //         'text':'Hubei revises methodology'
-      //       }] })
-      //     .draw();
-      // }, 4000);
-    // Use it again.
-    
-    // setTimeout(() => {
-    //   this.chart
-    //     // .data([30, 50, 30])
-    //     .props({ fill: base.blue.hex })
-    //     .draw();
-    // }, 2000);
+  // Run every time our state variables update
+  useEffect(() => {
+    chart.selection(chartContainer.current);
 
-    // Add a listener to resize chart with the window.
-    window.addEventListener('resize', this.resize);
-  }
+    switch (option) {
+      case 'annotations':
+        chart
+          .props({
+            labels: true,
+            annotations: [{
+              date: '2020-02-12',
+              text: 'Hubei revises methodology',
+              class: 'hide-mobile',
+            }, {
+              date: '2020-05-25',
+              text: 'Hubei revises methodology',
+              class: 'hide-desktop',
+            }],
+          })
+          .draw();
+        break;
+      case 'new-data':
+        chart
+          .data(newDataRead)
+          .props({
+            height: 250,
+            labels: true,
+            population: 1700000000,
+            annotations: [{
+              date: '2020-02-12',
+              text: 'Hubei revises methodology',
+            }],
+          })
+          .draw();
+        break;
+      default:
+        chart
+          .props({
+            labels: true,
+            annotations: [],
+          })
+          .draw();
+    }
+  }, [option, chartContainer]);
 
-  componentWillUnmount() {
-    // Remove listener if the component is removed, too.
-    window.removeEventListener('resize', this.resize);
-  }
-
-  componentDidUpdate() {
-    // Update the chart with the component.
-    // Can change data or props here, whatever...
-    this.chart.draw();
-  }
-
-  render() {
-    const { width } = this.state;
-    return (
-      <ChartContainer width={width} setWidth={(width) => this.setState({ width })}>
-        {/* This is our chart container 👇 */}
-        <div id='chart' ref={this.chartContainer} />
-      </ChartContainer>
-    );
-  }
-}
+  return (
+    <ChartContainer width={width} setWidth={(width) => setWidth(width)}>
+      {/* This is our chart container 👇 */}
+      <div id='chart' ref={chartContainer} />
+      {/* Some options we can use to show what our chart does! */}
+      <div className='options-container'>
+        <h6>Props</h6>
+        <button
+          onClick={() => setOption('')}
+        >Default
+        </button>
+        <button
+          onClick={() => setOption('annotations')}
+        >Annotations
+        </button>
+        <button
+          onClick={() => setOption('new-data')}
+        >New data
+        </button>
+      </div>
+    </ChartContainer>
+  );
+};
 
 export default ChartComponent;
