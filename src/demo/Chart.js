@@ -5,7 +5,7 @@ import d3 from '../lib/utils/d3';
 import { base } from '@reuters-graphics/style-color/dist/categorical';
 import debounce from 'lodash/debounce';
 let newDataRead
-d3.json('http://graphics.thomsonreuters.com/data/2020/coronavirus/global-tracker/regions/asia/counts/cases.json')
+d3.json('http://graphics.thomsonreuters.com/data/2020/coronavirus/global-tracker/countries/china/counts/cases.json')
       .then(function(newdata){
         newDataRead = newdata
       })
@@ -26,21 +26,33 @@ class ChartComponent extends React.Component {
     this.chart
       .selection(this.chartContainer.current)
       // .data(newDataRead)
-      .props({labels: true })
+      .props({
+        // population: 370000000,
+        labels: true, annotations:[
+            {
+              'date':'2020-02-12',
+              'text':'Hubei revises methodology',
+              'class':'hide-mobile'
+            },
+            {
+              'date':'2020-05-25',
+              'text':'Hubei revises methodology',
+              'class':'hide-desktop'
+            }]})
       .draw();
 
     
-      setTimeout(() => {
-        this.chart
-        .selection(this.chartContainer.current)
-          .data(newDataRead)
-          .props({ height: 250,labels: true,annotations:[
-            {
-              'date':'2020-02-12',
-              'text':'Hubei revises methodology'
-            }] })
-          .draw();
-      }, 4000);
+      // setTimeout(() => {
+      //   this.chart
+      //   .selection(this.chartContainer.current)
+      //     .data(newDataRead)
+      //     .props({ height: 250,labels: true,population:1700000000,annotations:[
+      //       {
+      //         'date':'2020-02-12',
+      //         'text':'Hubei revises methodology'
+      //       }] })
+      //     .draw();
+      // }, 4000);
     // Use it again.
     
     // setTimeout(() => {

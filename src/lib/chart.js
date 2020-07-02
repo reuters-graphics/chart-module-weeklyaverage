@@ -1,6 +1,6 @@
 import ChartComponent from './base/ChartComponent';
 import d3 from './utils/d3';
-import { getDates }  from "./utils/utils"
+import { getDates, round }  from "./utils/utils"
 import defaultData from './defaultData.json';
 
 let dateParse = d3.timeParse("%Y-%m-%d");
@@ -25,7 +25,7 @@ class WeeklyAverage extends ChartComponent {
       daily_numbers: 'Daily new ',
       tooltip_suffix: ' new ',
       avg:'-day average',
-      per_pop: ' new cases per 100k people'
+      per_pop_tt_suffix: ' per 100k people in the population'
     }
   };
 
@@ -39,7 +39,9 @@ class WeeklyAverage extends ChartComponent {
     const margin = {left: 20, right: 50, top: 10, bottom: 30}
     
     data.forEach(function(d,i){
+      d.use_count = (props.population)?(d.count/props.population*100000):d.count
       d.mean = d3.mean(data.slice((i-props.avg_days),i),d=>+d.count) // avg calc
+      d.use_mean = (props.population)?(d.mean/props.population*100000):d.mean
     })
 
     const { width } = node.getBoundingClientRect();
@@ -65,18 +67,18 @@ class WeeklyAverage extends ChartComponent {
     // y scale
     let scaleY = d3.scaleLinear()
                     .range([props.height-margin.bottom-margin.top,0])
-                    .domain(d3.extent(data,d=>+d.count))
+                    .domain(d3.extent(data,d=>+d.use_count))
 
     // line
     let line = d3.line()
                   .x(d=>scaleX(dateParse(d.date)))
-                  .y(d=>scaleY(d.mean?d.mean:0))
+                  .y(d=>scaleY(d.use_mean?d.use_mean:0))
 
     g.appendSelect('g.axis--y')
       .attr('class','axis--y axis')
       .transition(transition)
       .attr('transform',`translate(${width-margin.right-margin.left},0)`)
-      .call(d3.axisRight(scaleY).ticks(3).tickSize(-width+margin.left+margin.right))
+      .call(d3.axisRight(scaleY).ticks(3))
 
     g.appendSelect('g.axis--x')
       .attr('class','axis--x axis')
@@ -93,15 +95,15 @@ class WeeklyAverage extends ChartComponent {
     bars.enter().append('rect')
       .attr('class',d=>`bar d-${d.date.replace(/-/g,'')}`)
       .style('fill', props.fill)
-      .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.count))
+      .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
       .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-      .attr('y', d=>scaleY(+d.count))
+      .attr('y', d=>scaleY(+d.use_count))
       .attr('width', scaleX.bandwidth())
       .merge(bars)
       .transition(transition)
-      .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.count))
+      .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
       .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-      .attr('y', d=>scaleY(+d.count))
+      .attr('y', d=>scaleY(+d.use_count))
       .attr('width', scaleX.bandwidth())
 
     bars.exit()
@@ -162,7 +164,7 @@ class WeeklyAverage extends ChartComponent {
 
       // avg label
       let avg_label = label_container.appendSelect('g.avg-label')
-                                      .attr('transform',`translate(${scaleX(dateParse(data[10].date))},${scaleY(data[10].mean)-props.height/20})`)
+                                      .attr('transform',`translate(${scaleX(dateParse(data[14].date))},${scaleY(data[14].use_mean)-props.height/20})`)
 
       avg_label.appendSelect('line')
                 .attr('x1', 0)
@@ -179,10 +181,10 @@ class WeeklyAverage extends ChartComponent {
 
       // GET MAX
 
-      let max = d3.max(data, d=>d.count)
-      let max_var = data.filter(d=>d.count==max)[0]
+      let max = d3.max(data, d=>d.use_count)
+      let max_var = data.filter(d=>d.use_count==max)[0]
       let new_nos_label = label_container.appendSelect('g.new-nos-label')
-                                      .attr('transform',`translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.count)})`)
+                                      .attr('transform',`translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.use_count)})`)
 
       new_nos_label.appendSelect('line')
                 .attr('x1', -10)
@@ -203,13 +205,15 @@ class WeeklyAverage extends ChartComponent {
     let tt_inner = tooltipBox.appendSelect('div.tooltip-inner')
 
     function showTooltip(obj) {
+      let tooltip_text_add = props.population?props.text.per_pop_tt_suffix:''
+      let formatFunction = props.population?round:numberFormat_tt
         d3.select(`.bar.d-${obj.date.replace(/-/g,"")}`)
           .classed('active',true)
         
         let coords = []
 
         coords[0]=scaleX(dateParse(obj.date))+margin.left+(scaleX.bandwidth()/2)
-        coords[1]=scaleY(obj.count)+margin.top
+        coords[1]=scaleY(obj.use_count)+margin.top
 
         let q = getTooltipType(coords,[props.height,width])
 
@@ -223,7 +227,7 @@ class WeeklyAverage extends ChartComponent {
                 .text(dateFormat_tt(dateParse(obj.date)))
 
          tt_inner.appendSelect('div.tt-row')
-                .text(numberFormat_tt(obj.count)+props.text.tooltip_suffix+props.variable_name)
+                .text(formatFunction(obj.use_count)+props.text.tooltip_suffix+props.variable_name+tooltip_text_add)
       }
 
     function hideTooltip() {
@@ -258,8 +262,15 @@ class WeeklyAverage extends ChartComponent {
 
 
     // Annotations
+    // Reposition if already on the page
     let annotation_check = g.selectAll('g.annotations-container').node()?true:false
-    
+
+    props.annotations = props.annotations.filter(function(d){
+      if (scaleX(dateParse(d.date)) && d.text.length>1){
+        return d
+      }
+    })
+
     if(props.annotations.length>0 || annotation_check){
 
       let annotations_container = g.appendSelect('g.annotations-container')
@@ -268,7 +279,7 @@ class WeeklyAverage extends ChartComponent {
       
       let annotation = annotations_container.enter()
                                             .append('g')
-                                            .attr('class','annotation')
+                                            .attr('class',d=>d.class?`annotation ${d.class}`:'annotation')
                                             .attr('transform',d=>`translate(${scaleX(dateParse(d.date))},0)`)                       
 
       annotations_container.merge(annotations_container)
@@ -278,7 +289,13 @@ class WeeklyAverage extends ChartComponent {
       annotation.appendSelect('line')
                 .attr('x1',0)
                 .attr('x2',0)
-                .attr('y2',0)
+                .attr('y2',function(d){
+                      if (scaleX(dateParse(d.date))>(width/2)){
+                        return  props.height/6*1.5-10
+                      } else{
+                        return props.height/6*4-10
+                      }
+                })
                 .attr('y1',props.height-margin.top-margin.bottom)
 
       let text_container = annotation.appendSelect('g.text-container')

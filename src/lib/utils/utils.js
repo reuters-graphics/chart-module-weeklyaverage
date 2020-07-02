@@ -14,5 +14,11 @@ function getDates(startDate, stopDate) {
     return dateArray;
 }
 
+function round(value, precision) {
+    let multiplier = Math.pow(10, precision || 0);
+    
+    return Math.round(value * multiplier) / multiplier;
+    
+}
 
-export { getDates };
+export { getDates , round};
