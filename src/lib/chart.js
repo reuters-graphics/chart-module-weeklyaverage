@@ -14,10 +14,11 @@ class WeeklyAverage extends ChartComponent {
     stroke: 'steelblue',
     strokeWidth: 2.5,
     fill: '#eee',
-    height: 400,
+    height: 200,
     avg_days: 7,
     annotations: [],
     population: false,
+    bars:true,
     padding: 0,
     labels: false,
     variable_name: 'cases',
@@ -78,7 +79,7 @@ class WeeklyAverage extends ChartComponent {
       .attr('class','axis--y axis')
       .transition(transition)
       .attr('transform',`translate(${width-margin.right-margin.left},0)`)
-      .call(d3.axisRight(scaleY).ticks(3))
+      .call(d3.axisRight(scaleY).ticks(props.bars?3:1))
 
     g.appendSelect('g.axis--x')
       .attr('class','axis--x axis')
@@ -87,60 +88,62 @@ class WeeklyAverage extends ChartComponent {
       .call(d3.axisBottom(scaleX).tickValues([dateList[0],dateList[dateList.length-1]]).tickFormat(dateFormat))
 
 
+    if (props.bars){
+        const bars = g.appendSelect('g.bars-container')
+              .selectAll('.bar')
+              .data(data, (d, i) => d.date); // for smooth data updation
 
-    const bars = g.appendSelect('g.bars-container')
-      .selectAll('.bar')
-      .data(data, (d, i) => d.date); // for smooth data updation
+            bars.enter().append('rect')
+              .attr('class',d=>`bar d-${d.date.replace(/-/g,'')}`)
+              .style('fill', props.fill)
+              .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
+              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
+              .attr('y', d=>scaleY(+d.use_count))
+              .attr('width', scaleX.bandwidth())
+              .merge(bars)
+              .transition(transition)
+              .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
+              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
+              .attr('y', d=>scaleY(+d.use_count))
+              .attr('width', scaleX.bandwidth())
 
-    bars.enter().append('rect')
-      .attr('class',d=>`bar d-${d.date.replace(/-/g,'')}`)
-      .style('fill', props.fill)
-      .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
-      .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-      .attr('y', d=>scaleY(+d.use_count))
-      .attr('width', scaleX.bandwidth())
-      .merge(bars)
-      .transition(transition)
-      .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
-      .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-      .attr('y', d=>scaleY(+d.use_count))
-      .attr('width', scaleX.bandwidth())
+            bars.exit()
+              .transition(transition)
+              .attr('height', 0)
+              .remove();
 
-    bars.exit()
-      .transition(transition)
-      .attr('height', 0)
-      .remove();
+            const bars_dummy = g.appendSelect('g.dummy-container')
+              .selectAll('.dummy')
+              .data(data, (d, i) => d.date);
 
-    const bars_dummy = g.appendSelect('g.dummy-container')
-      .selectAll('.dummy')
-      .data(data, (d, i) => d.date);
+            bars_dummy.enter()
+              .append('rect')
+              .style('fill', 'white')
+              .attr('class','dummy')
+              .style('opacity',0)
+              .attr('height', d=>props.height)
+              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
+              .attr('y', d=>0)
+              .attr('width', scaleX.bandwidth())
+              .on('mouseover',showTooltip)
+              .on('mouseout',hideTooltip)
+              .merge(bars_dummy)
+              .transition(transition)
+              .attr('height', d=>props.height)
+              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
+              .attr('y', d=>0)
+              .attr('width', scaleX.bandwidth())
 
-    bars_dummy.enter()
-      .append('rect')
-      .style('fill', 'white')
-      .attr('class','dummy')
-      .style('opacity',0)
-      .attr('height', d=>props.height)
-      .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-      .attr('y', d=>0)
-      .attr('width', scaleX.bandwidth())
-      .on('mouseover',showTooltip)
-      .on('mouseout',hideTooltip)
-      .merge(bars_dummy)
-      .transition(transition)
-      .attr('height', d=>props.height)
-      .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-      .attr('y', d=>0)
-      .attr('width', scaleX.bandwidth())
+            bars_dummy.exit()
+              .transition(transition)
+              .attr('height', 0)
+              .remove();
 
-    bars_dummy.exit()
-      .transition(transition)
-      .attr('height', 0)
-      .remove();
+            bars_dummy.on('mouseover',showTooltip)
+              .on('mouseout',hideTooltip)
 
-    bars_dummy.on('mouseover',showTooltip)
-      .on('mouseout',hideTooltip)
-
+    }
+    
     
 
     // avg line

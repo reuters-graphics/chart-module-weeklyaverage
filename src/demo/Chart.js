@@ -11,7 +11,7 @@ d3.json('http://graphics.thomsonreuters.com/data/2020/coronavirus/global-tracker
       })
 
 class ChartComponent extends React.Component {
-  state = { width: '' };
+  state = { width: '200' };
   chartContainer = React.createRef();
 
   // Instantiate and add our chart class to this component.
@@ -28,7 +28,8 @@ class ChartComponent extends React.Component {
       // .data(newDataRead)
       .props({
         // population: 370000000,
-        labels: true, 
+        labels: false, 
+        bars: false,
         // annotations:[
         //     {
         //       'date':'2020-02-12',
