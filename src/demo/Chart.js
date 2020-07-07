@@ -28,17 +28,19 @@ class ChartComponent extends React.Component {
       // .data(newDataRead)
       .props({
         // population: 370000000,
-        labels: true, annotations:[
-            {
-              'date':'2020-02-12',
-              'text':'Hubei revises methodology',
-              'class':'hide-mobile'
-            },
-            {
-              'date':'2020-05-25',
-              'text':'Hubei revises methodology',
-              'class':'hide-desktop'
-            }]})
+        labels: true, 
+        // annotations:[
+        //     {
+        //       'date':'2020-02-12',
+        //       'text':'Hubei revises methodology',
+        //       'class':'hide-mobile'
+        //     },
+        //     {
+        //       'date':'2020-05-25',
+        //       'text':'Hubei revises methodology',
+        //       'class':'hide-desktop'
+        //     }]
+      })
       .draw();
 
     

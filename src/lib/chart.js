@@ -46,7 +46,7 @@ class WeeklyAverage extends ChartComponent {
 
     const { width } = node.getBoundingClientRect();
     const transition = d3.transition()
-      .duration(750);
+                        .duration(750);
 
     const g = this.selection()
       .appendSelect('svg') // see docs in ./utils/d3.js
