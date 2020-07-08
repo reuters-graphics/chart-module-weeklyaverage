@@ -1,13 +1,15 @@
+import { getDates, round } from './utils/utils';
+
 import ChartComponent from './base/ChartComponent';
 import d3 from './utils/d3';
-import { getDates, round }  from "./utils/utils"
-import defaultData from './defaultData.json';
 
-let dateParse = d3.timeParse("%Y-%m-%d");
-let dateFormat = d3.timeFormat("%b %e");
-let dateFormat_tt = d3.timeFormat("%B %e");
-let numberFormat_tt = d3.format(",")
-var linewrap=18, font_siz=.8, lineheight=15
+// import defaultData from './defaultData.json';
+
+const dateParse = d3.timeParse('%Y-%m-%d');
+const dateFormat = d3.timeFormat('%b %e');
+const dateFormat_tt = d3.timeFormat('%B %e');
+const numberFormat_tt = d3.format(',');
+var linewrap = 18; var font_siz = 0.8; var lineheight = 15;
 
 class WeeklyAverage extends ChartComponent {
   defaultProps = {
@@ -18,36 +20,35 @@ class WeeklyAverage extends ChartComponent {
     avg_days: 7,
     annotations: [],
     population: false,
-    bars:true,
+    bars: true,
     padding: 0,
     labels: false,
     variable_name: 'cases',
-    text:{
+    text: {
       daily_numbers: 'Daily new ',
       tooltip_suffix: ' new ',
-      avg:'-day average',
-      per_pop_tt_suffix: ' per 100k people in the population'
-    }
+      avg: '-day average',
+      per_pop_tt_suffix: ' per 100k people in the population',
+    },
   };
 
-  defaultData = defaultData;
+  defaultData = [];
 
   draw() {
-
     const data = this.data();
     const props = this.props();
     const node = this.selection().node();
-    const margin = {left: 20, right: 50, top: 10, bottom: 30}
-    
-    data.forEach(function(d,i){
-      d.use_count = (props.population)?(d.count/props.population*100000):d.count
-      d.mean = d3.mean(data.slice((i-props.avg_days),i),d=>+d.count) // avg calc
-      d.use_mean = (props.population)?(d.mean/props.population*100000):d.mean
-    })
+    const margin = { left: 20, right: 50, top: 10, bottom: 30 };
+
+    data.forEach(function(d, i) {
+      d.use_count = (props.population) ? (d.count / props.population * 100000) : d.count;
+      d.mean = d3.mean(data.slice((i - props.avg_days), i), d => +d.count); // avg calc
+      d.use_mean = (props.population) ? (d.mean / props.population * 100000) : d.mean;
+    });
 
     const { width } = node.getBoundingClientRect();
     const transition = d3.transition()
-                        .duration(750);
+      .duration(750);
 
     const g = this.selection()
       .appendSelect('svg') // see docs in ./utils/d3.js
@@ -55,196 +56,190 @@ class WeeklyAverage extends ChartComponent {
       .attr('height', props.height)
       .appendSelect('g')
       .attr('transform', `translate(${margin.left}, ${margin.top})`);
-    
-    let dateList = getDates(dateParse(data[0].date),dateParse(data[data.length-1].date)) // needs reworking
-    
+
+    const dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date)); // needs reworking
+
     // x scale
-    let scaleX = d3.scaleBand()
-                    .round(false)
-                    .range([0, width-margin.right-margin.left])
-                    .domain(dateList)
-                    .padding(props.padding)
+    const scaleX = d3.scaleBand()
+      .round(false)
+      .range([0, width - margin.right - margin.left])
+      .domain(dateList)
+      .padding(props.padding);
 
     // y scale
-    let scaleY = d3.scaleLinear()
-                    .range([props.height-margin.bottom-margin.top,0])
-                    .domain(d3.extent(data,d=>+d.use_count))
+    const scaleY = d3.scaleLinear()
+      .range([props.height - margin.bottom - margin.top, 0])
+      .domain(d3.extent(data, d => +d.use_count));
 
     // line
-    let line = d3.line()
-                  .x(d=>scaleX(dateParse(d.date)))
-                  .y(d=>scaleY(d.use_mean?d.use_mean:0))
+    const line = d3.line()
+      .x(d => scaleX(dateParse(d.date)))
+      .y(d => scaleY(d.use_mean ? d.use_mean : 0));
 
     g.appendSelect('g.axis--y')
-      .attr('class','axis--y axis')
+      .attr('class', 'axis--y axis')
       .transition(transition)
-      .attr('transform',`translate(${width-margin.right-margin.left},0)`)
-      .call(d3.axisRight(scaleY).ticks(props.bars?3:1))
+      .attr('transform', `translate(${width - margin.right - margin.left},0)`)
+      .call(d3.axisRight(scaleY).ticks(props.bars ? 3 : 1));
 
     g.appendSelect('g.axis--x')
-      .attr('class','axis--x axis')
+      .attr('class', 'axis--x axis')
       .transition(transition)
-      .attr('transform',`translate(0,${props.height-margin.bottom-margin.top})`)
-      .call(d3.axisBottom(scaleX).tickValues([dateList[0],dateList[dateList.length-1]]).tickFormat(dateFormat))
+      .attr('transform', `translate(0,${props.height - margin.bottom - margin.top})`)
+      .call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
 
+    if (props.bars) {
+      const bars = g.appendSelect('g.bars-container')
+        .selectAll('.bar')
+        .data(data, (d, i) => d.date); // for smooth data updation
 
-    if (props.bars){
-        const bars = g.appendSelect('g.bars-container')
-              .selectAll('.bar')
-              .data(data, (d, i) => d.date); // for smooth data updation
+      bars.enter().append('rect')
+        .attr('class', d => `bar d-${d.date.replace(/-/g, '')}`)
+        .style('fill', props.fill)
+        .attr('height', d => (props.height - margin.top - margin.bottom) - scaleY(+d.use_count))
+        .attr('x', (d, i) => scaleX(dateParse(d.date)))
+        .attr('y', d => scaleY(+d.use_count))
+        .attr('width', scaleX.bandwidth())
+        .merge(bars)
+        .transition(transition)
+        .attr('height', d => (props.height - margin.top - margin.bottom) - scaleY(+d.use_count))
+        .attr('x', (d, i) => scaleX(dateParse(d.date)))
+        .attr('y', d => scaleY(+d.use_count))
+        .attr('width', scaleX.bandwidth());
 
-            bars.enter().append('rect')
-              .attr('class',d=>`bar d-${d.date.replace(/-/g,'')}`)
-              .style('fill', props.fill)
-              .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
-              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-              .attr('y', d=>scaleY(+d.use_count))
-              .attr('width', scaleX.bandwidth())
-              .merge(bars)
-              .transition(transition)
-              .attr('height', d=>(props.height-margin.top-margin.bottom)-scaleY(+d.use_count))
-              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-              .attr('y', d=>scaleY(+d.use_count))
-              .attr('width', scaleX.bandwidth())
+      bars.exit()
+        .transition(transition)
+        .attr('height', 0)
+        .remove();
 
-            bars.exit()
-              .transition(transition)
-              .attr('height', 0)
-              .remove();
+      const bars_dummy = g.appendSelect('g.dummy-container')
+        .selectAll('.dummy')
+        .data(data, (d, i) => d.date);
 
-            const bars_dummy = g.appendSelect('g.dummy-container')
-              .selectAll('.dummy')
-              .data(data, (d, i) => d.date);
+      bars_dummy.enter()
+        .append('rect')
+        .style('fill', 'white')
+        .attr('class', 'dummy')
+        .style('opacity', 0)
+        .attr('height', d => props.height)
+        .attr('x', (d, i) => scaleX(dateParse(d.date)))
+        .attr('y', d => 0)
+        .attr('width', scaleX.bandwidth())
+        .on('mouseover', showTooltip)
+        .on('mouseout', hideTooltip)
+        .merge(bars_dummy)
+        .transition(transition)
+        .attr('height', d => props.height)
+        .attr('x', (d, i) => scaleX(dateParse(d.date)))
+        .attr('y', d => 0)
+        .attr('width', scaleX.bandwidth());
 
-            bars_dummy.enter()
-              .append('rect')
-              .style('fill', 'white')
-              .attr('class','dummy')
-              .style('opacity',0)
-              .attr('height', d=>props.height)
-              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-              .attr('y', d=>0)
-              .attr('width', scaleX.bandwidth())
-              .on('mouseover',showTooltip)
-              .on('mouseout',hideTooltip)
-              .merge(bars_dummy)
-              .transition(transition)
-              .attr('height', d=>props.height)
-              .attr('x', (d,i)=>scaleX(dateParse(d.date)))
-              .attr('y', d=>0)
-              .attr('width', scaleX.bandwidth())
+      bars_dummy.exit()
+        .transition(transition)
+        .attr('height', 0)
+        .remove();
 
-            bars_dummy.exit()
-              .transition(transition)
-              .attr('height', 0)
-              .remove();
-
-            bars_dummy.on('mouseover',showTooltip)
-              .on('mouseout',hideTooltip)
-
+      bars_dummy.on('mouseover', showTooltip)
+        .on('mouseout', hideTooltip);
     }
-    
-    
 
     // avg line
     const avg_line = g.selectAll('.avg-line')
-                      .data([data])
+      .data([data]);
 
     avg_line.enter()
-          .append('path')
-          .attr('class','avg-line')
-          .merge(avg_line)
-          .transition(transition)
-          .attr('d',line)
-          .attr('fill',"none")
-          .attr('stroke',props.stroke)
-          .attr('stroke-width',props.strokeWidth)
-
+      .append('path')
+      .attr('class', 'avg-line')
+      .merge(avg_line)
+      .transition(transition)
+      .attr('d', line)
+      .attr('fill', 'none')
+      .attr('stroke', props.stroke)
+      .attr('stroke-width', props.strokeWidth);
 
     // LABELS
-    if (props.labels){
-      let label_container = g.appendSelect('g.labels')
+    if (props.labels) {
+      const label_container = g.appendSelect('g.labels');
 
       // avg label
-      let avg_label = label_container.appendSelect('g.avg-label')
-                                      .attr('transform',`translate(${scaleX(dateParse(data[14].date))},${scaleY(data[14].use_mean)-props.height/20})`)
+      const avg_label = label_container.appendSelect('g.avg-label')
+        .attr('transform', `translate(${scaleX(dateParse(data[14].date))},${scaleY(data[14].use_mean) - props.height / 20})`);
 
       avg_label.appendSelect('line')
-                .attr('x1', 0)
-                .attr('x2', 0)
-                .attr('y1', props.height/20)
-                .attr('y2', 0)
+        .attr('x1', 0)
+        .attr('x2', 0)
+        .attr('y1', props.height / 20)
+        .attr('y2', 0);
 
       avg_label.appendSelect('text')
-                .attr('dx',-10)
-                .attr('dy',-5)
-                .text(`${props.avg_days}${props.text.avg}`)
+        .attr('dx', -10)
+        .attr('dy', -5)
+        .text(`${props.avg_days}${props.text.avg}`);
 
       // new numbers label
 
       // GET MAX
 
-      let max = d3.max(data, d=>d.use_count)
-      let max_var = data.filter(d=>d.use_count==max)[0]
-      let new_nos_label = label_container.appendSelect('g.new-nos-label')
-                                      .attr('transform',`translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.use_count)})`)
+      const max = d3.max(data, d => d.use_count);
+      const max_var = data.filter(d => d.use_count == max)[0];
+      const new_nos_label = label_container.appendSelect('g.new-nos-label')
+        .attr('transform', `translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.use_count)})`);
 
       new_nos_label.appendSelect('line')
-                .attr('x1', -10)
-                .attr('x2', 0)
-                .attr('y1', 10)
-                .attr('y2', 10)
+        .attr('x1', -10)
+        .attr('x2', 0)
+        .attr('y1', 10)
+        .attr('y2', 10);
 
       new_nos_label.appendSelect('text')
-                .style('text-anchor','end')
-                .attr('dx',-13)
-                .attr('dy',12)
-                .text(`${props.text.daily_numbers+props.variable_name}`)
+        .style('text-anchor', 'end')
+        .attr('dx', -13)
+        .attr('dy', 12)
+        .text(`${props.text.daily_numbers + props.variable_name}`);
     }
     // tooltip
-    let tooltipBox = this.selection()
-                          .appendSelect('div.custom-tooltip')
+    const tooltipBox = this.selection()
+      .appendSelect('div.custom-tooltip');
 
-    let tt_inner = tooltipBox.appendSelect('div.tooltip-inner')
+    const tt_inner = tooltipBox.appendSelect('div.tooltip-inner');
 
     function showTooltip(obj) {
-      let tooltip_text_add = props.population?props.text.per_pop_tt_suffix:''
-      let formatFunction = props.population?round:numberFormat_tt
-        d3.select(`.bar.d-${obj.date.replace(/-/g,"")}`)
-          .classed('active',true)
-        
-        let coords = []
+      const tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
+      const formatFunction = props.population ? round : numberFormat_tt;
+      d3.select(`.bar.d-${obj.date.replace(/-/g, '')}`)
+        .classed('active', true);
 
-        coords[0]=scaleX(dateParse(obj.date))+margin.left+(scaleX.bandwidth()/2)
-        coords[1]=scaleY(obj.use_count)+margin.top
+      const coords = [];
 
-        let q = getTooltipType(coords,[props.height,width])
+      coords[0] = scaleX(dateParse(obj.date)) + margin.left + (scaleX.bandwidth() / 2);
+      coords[1] = scaleY(obj.use_count) + margin.top;
 
-        tooltipBox.classed('tooltip-active',true)
-                  .classed(`tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se`,false)
-                  .style('left',`${coords[0]}px`)
-                  .style('top',`${coords[1]}px`)
-                  .classed(`tooltip-${q}`,true)
+      const q = getTooltipType(coords, [props.height, width]);
 
-        tt_inner.appendSelect('div.tt-header')
-                .text(dateFormat_tt(dateParse(obj.date)))
+      tooltipBox.classed('tooltip-active', true)
+        .classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false)
+        .style('left', `${coords[0]}px`)
+        .style('top', `${coords[1]}px`)
+        .classed(`tooltip-${q}`, true);
 
-         tt_inner.appendSelect('div.tt-row')
-                .text(formatFunction(obj.use_count)+props.text.tooltip_suffix+props.variable_name+tooltip_text_add)
-      }
+      tt_inner.appendSelect('div.tt-header')
+        .text(dateFormat_tt(dateParse(obj.date)));
+
+      tt_inner.appendSelect('div.tt-row')
+        .text(formatFunction(obj.use_count) + props.text.tooltip_suffix + props.variable_name + tooltip_text_add);
+    }
 
     function hideTooltip() {
       d3.select('.bar.active')
-        .classed('active',false)
+        .classed('active', false);
 
-      tooltipBox.classed('tooltip-active',false)
-     
+      tooltipBox.classed('tooltip-active', false);
     }
 
-    function getTooltipType(coords, size){
-      let l = [];
+    function getTooltipType(coords, size) {
+      const l = [];
 
-      let ns_threshold = size[1]<500 ? 4 : 2;
+      const ns_threshold = size[1] < 500 ? 4 : 2;
 
       if (coords[1] > size[1] / ns_threshold) {
         l.push('s');
@@ -263,71 +258,69 @@ class WeeklyAverage extends ChartComponent {
       return l.join('');
     }
 
-
     // Annotations
     // Reposition if already on the page
-    let annotation_check = g.selectAll('g.annotations-container').node()?true:false
+    const annotation_check = !!g.selectAll('g.annotations-container').node();
 
-    props.annotations = props.annotations.filter(function(d){
-      if (scaleX(dateParse(d.date)) && d.text.length>1){
-        return d
+    props.annotations = props.annotations.filter(function(d) {
+      if (scaleX(dateParse(d.date)) && d.text.length > 1) {
+        return d;
       }
-    })
+    });
 
-    if(props.annotations.length>0 || annotation_check){
+    if (props.annotations.length > 0 || annotation_check) {
+      const annotations_container = g.appendSelect('g.annotations-container')
+        .selectAll('.annotation')
+        .data(props.annotations, (d, i) => d.date);
 
-      let annotations_container = g.appendSelect('g.annotations-container')
-                        .selectAll('.annotation')
-                        .data(props.annotations, (d, i) => d.date);
-      
-      let annotation = annotations_container.enter()
-                                            .append('g')
-                                            .attr('class',d=>d.class?`annotation ${d.class}`:'annotation')
-                                            .attr('transform',d=>`translate(${scaleX(dateParse(d.date))},0)`)                       
+      const annotation = annotations_container.enter()
+        .append('g')
+        .attr('class', d => d.class ? `annotation ${d.class}` : 'annotation')
+        .attr('transform', d => `translate(${scaleX(dateParse(d.date))},0)`);
 
       annotations_container.merge(annotations_container)
-                          .transition(transition)
-                          .attr('transform',d=>`translate(${scaleX(dateParse(d.date))},0)`)                       
+        .transition(transition)
+        .attr('transform', d => `translate(${scaleX(dateParse(d.date))},0)`);
 
       annotation.appendSelect('line')
-                .attr('x1',0)
-                .attr('x2',0)
-                .attr('y2',function(d){
-                      if (scaleX(dateParse(d.date))>(width/2)){
-                        return  props.height/6*1.5-10
-                      } else{
-                        return props.height/6*4-10
-                      }
-                })
-                .attr('y1',props.height-margin.top-margin.bottom)
+        .attr('x1', 0)
+        .attr('x2', 0)
+        .attr('y2', function(d) {
+          if (scaleX(dateParse(d.date)) > (width / 2)) {
+            return props.height / 6 * 1.5 - 10;
+          } else {
+            return props.height / 6 * 4 - 10;
+          }
+        })
+        .attr('y1', props.height - margin.top - margin.bottom);
 
-      let text_container = annotation.appendSelect('g.text-container')
-                                    .attr('transform',function(d){
-                                        if (scaleX(dateParse(d.date))>(width/2)){
-                                          return `translate(-8,${props.height/6*1.5})`
-                                        } else{
-                                          return `translate(8,${props.height/6*4})`
-                                        }
-                                    })
-                                    .attr('text-anchor',function(d){
-                                        if (scaleX(dateParse(d.date))>(width/2)){
-                                          return 'end'
-                                        } else{
-                                          return 'start'
-                                        }
-                                    })
+      const text_container = annotation.appendSelect('g.text-container')
+        .attr('transform', function(d) {
+          if (scaleX(dateParse(d.date)) > (width / 2)) {
+            return `translate(-8,${props.height / 6 * 1.5})`;
+          } else {
+            return `translate(8,${props.height / 6 * 4})`;
+          }
+        })
+        .attr('text-anchor', function(d) {
+          if (scaleX(dateParse(d.date)) > (width / 2)) {
+            return 'end';
+          } else {
+            return 'start';
+          }
+        });
 
-        text_container.appendSelect('text.date')
-                     .text(d=>dateFormat_tt(dateParse(d.date)))
+      text_container.appendSelect('text.date')
+        .text(d => dateFormat_tt(dateParse(d.date)));
 
-        text_container.appendSelect('text.text')
-                      .attr('dy',16)
-                      .text(d=>d.text)
-                     // .text('')
-                     // .tspans( function(d){return d3.wordwrap(d.text, linewrap)}, lineheight)
-        
-        annotations_container.exit()
-            .remove();
+      text_container.appendSelect('text.text')
+        .attr('dy', 16)
+        .text(d => d.text);
+      // .text('')
+      // .tspans( function(d){return d3.wordwrap(d.text, linewrap)}, lineheight)
+
+      annotations_container.exit()
+        .remove();
     }
 
     return this;
