@@ -10,7 +10,6 @@ const dateParse = d3.timeParse('%Y-%m-%d');
 const dateFormat = d3.timeFormat('%b %e');
 const dateFormat_tt = d3.timeFormat('%B %e');
 const numberFormat_tt = d3.format(',');
-var linewrap = 18; var font_siz = 0.8; var lineheight = 15;
 
 class WeeklyAverage extends ChartComponent {
   defaultProps = {
@@ -317,8 +316,6 @@ class WeeklyAverage extends ChartComponent {
       text_container.appendSelect('text.text')
         .attr('dy', 16)
         .text(d => d.text);
-      // .text('')
-      // .tspans( function(d){return d3.wordwrap(d.text, linewrap)}, lineheight)
 
       annotations_container.exit()
         .remove();
