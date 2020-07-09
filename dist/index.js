@@ -4,6 +4,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var d3 = require('d3');
 var merge = _interopDefault(require('lodash/merge'));
+var Mustache = _interopDefault(require('mustache'));
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -520,7 +521,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       text: {
         daily_numbers: 'Daily new ',
         tooltip_suffix: ' new ',
-        avg: '-day average',
+        avg: '{{ average }}-day average',
         per_pop_tt_suffix: ' per 100k people in the population'
       }
     });
@@ -624,7 +625,9 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
 
         var avg_label = label_container.appendSelect('g.avg-label').attr('transform', "translate(".concat(scaleX(dateParse(data[14].date)), ",").concat(scaleY(data[14].use_mean) - props.height / 20, ")"));
         avg_label.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y1', props.height / 20).attr('y2', 0);
-        avg_label.appendSelect('text').attr('dx', -10).attr('dy', -5).text("".concat(props.avg_days).concat(props.text.avg)); // new numbers label
+        avg_label.appendSelect('text').attr('dx', -10).attr('dy', -5).text(Mustache.render(props.text.avg, {
+          average: props.avg_days
+        })); // new numbers label
         // GET MAX
 
         var max = d3.max(data, function (d) {
@@ -645,7 +648,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       function showTooltip(obj) {
         var tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
         var formatFunction = props.population ? round : numberFormat_tt;
-        d3.select(".bar.d-".concat(obj.date.replace(/-/g, ''))).classed('active', true);
+        g.select(".bar.d-".concat(obj.date.replace(/-/g, ''))).classed('active', true);
         var coords = [];
         coords[0] = scaleX(dateParse(obj.date)) + margin.left + scaleX.bandwidth() / 2;
         coords[1] = scaleY(obj.use_count) + margin.top;
@@ -656,7 +659,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       }
 
       function hideTooltip() {
-        d3.select('.bar.active').classed('active', false);
+        g.select('.bar.active').classed('active', false);
         tooltipBox.classed('tooltip-active', false);
       }
 
@@ -727,9 +730,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         });
         text_container.appendSelect('text.text').attr('dy', 16).text(function (d) {
           return d.text;
-        }); // .text('')
-        // .tspans( function(d){return d3.wordwrap(d.text, linewrap)}, lineheight)
-
+        });
         annotations_container.exit().remove();
       }
 
