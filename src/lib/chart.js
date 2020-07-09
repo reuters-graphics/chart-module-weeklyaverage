@@ -207,7 +207,7 @@ class WeeklyAverage extends ChartComponent {
     function showTooltip(obj) {
       const tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
       const formatFunction = props.population ? round : numberFormat_tt;
-      d3.select(`.bar.d-${obj.date.replace(/-/g, '')}`)
+      g.select(`.bar.d-${obj.date.replace(/-/g, '')}`)
         .classed('active', true);
 
       const coords = [];
@@ -231,7 +231,7 @@ class WeeklyAverage extends ChartComponent {
     }
 
     function hideTooltip() {
-      d3.select('.bar.active')
+      g.select('.bar.active')
         .classed('active', false);
 
       tooltipBox.classed('tooltip-active', false);
