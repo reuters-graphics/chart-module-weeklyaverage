@@ -33,41 +33,40 @@ myChart
 	annotations: [ 
 
 	// array of annotations you want on the 
-	//	chart in the format below. Class hide-mobile and hide-desktop 
-	//	can be used for platform specific annotations
+	// chart in the format below. Class hide-mobile and hide-desktop 
+	// can be used for platform specific annotations
 
-		//	{
+        //	{
         //       'date':'2020-02-12',
         //       'text':'Hubei revises methodology',
         //       'class':'hide-mobile'
         //   }
 	], 
-	population: false, //	If you want the numbers to be normalised 
-					   //	by population, pass a number here. It is false by default.
+	population: false, // If you want the numbers to be normalised 
+                       // by population, pass a number here. It is false by default.
 
-	bars: true, //	True by default. If you want just the line, 
-				//	set value to true
+	bars: true, // True by default. 
+				// If you want just the line, set value to true
 
-	padding: 0, //	to set padding between the bars. 
-				//	value should be between 0 to 1
+	padding: 0, // to set padding between the bars. 
+                // value should be between 0 to 1
 
-	labels: false, //	Setting this to true will show a label
-				   // 	to explain what the bars and line are
+	labels: false, // Setting this to true will show a label
+                   // to explain what the bars and line are
 
 	variable_name: 'cases', // What is this a chart of? Infections? Deaths? Tests?
-	text: { //	Here we pass all the text lines in the chart
+	text: { // Here we pass all the text lines in the chart
 
-	  daily_numbers: 'Daily new ', //	Daily new cases next to 
-	  							   //	the bar will show up
+	  daily_numbers: 'Daily new ', 
+	  // Bar label says daily new cases
 
-	  tooltip_suffix: ' new ', 	   //	Tooltip will say XXXXX new cases
+	  tooltip_suffix: ' new ', 	   // Tooltip will say XXXXX new cases
 
-	  avg: '{{ average }}-day average', //	How many day avg is the line. 
-	  									//	takes the number automatically 
-	  									//	from avg_days
+	  avg: '{{ average }}-day average', // How many day avg is the line. 
+	  // takes the number automatically from avg_days
 
 	  per_pop_tt_suffix: ' per 100k people in the population', // if normalised by 
-	  //	population, tooltip will say XXXXX new cases per 100k people in the population
+	  // population, tooltip will say XXXXX new cases per 100k people in the population
 	},
   )
   .draw();
