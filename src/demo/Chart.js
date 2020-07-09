@@ -3,6 +3,7 @@ import ChartContainer from './furniture/ChartContainer';
 import React from 'react';
 import d3 from '../lib/utils/d3';
 import debounce from 'lodash/debounce';
+import defaultData from './defaultData.json';
 
 class ChartComponent extends React.Component {
   state = { width: '200' };
@@ -15,51 +16,26 @@ class ChartComponent extends React.Component {
   resize = debounce(() => { this.chart.draw(); }, 250);
 
   componentDidMount() {
-    d3.json('http://graphics.thomsonreuters.com/data/2020/coronavirus/global-tracker/countries/china/counts/cases.json')
-      .then(function(data) {
-        this.chart
-          .selection(this.chartContainer.current)
-          .data(data)
-          .props({
-            // population: 370000000,
-            labels: false,
-            bars: false,
-            // annotations:[
-            //     {
-            //       'date':'2020-02-12',
-            //       'text':'Hubei revises methodology',
-            //       'class':'hide-mobile'
-            //     },
-            //     {
-            //       'date':'2020-05-25',
-            //       'text':'Hubei revises methodology',
-            //       'class':'hide-desktop'
-            //     }]
-          })
-          .draw();
-      });
-
-    // Use our chart module.
-
-    // setTimeout(() => {
-    //   this.chart
-    //   .selection(this.chartContainer.current)
-    //     .data(newDataRead)
-    //     .props({ height: 250,labels: true,population:1700000000,annotations:[
-    //       {
-    //         'date':'2020-02-12',
-    //         'text':'Hubei revises methodology'
-    //       }] })
-    //     .draw();
-    // }, 4000);
-    // Use it again.
-
-    // setTimeout(() => {
-    //   this.chart
-    //     // .data([30, 50, 30])
-    //     .props({ fill: base.blue.hex })
-    //     .draw();
-    // }, 2000);
+    this.chart
+      .selection(this.chartContainer.current)
+      .data(defaultData)
+      .props({
+        // population: 370000000,
+        labels: true,
+        // bars: false,
+        // annotations:[
+        //     {
+        //       'date':'2020-02-12',
+        //       'text':'Hubei revises methodology',
+        //       'class':'hide-mobile'
+        //     },
+        //     {
+        //       'date':'2020-05-25',
+        //       'text':'Hubei revises methodology',
+        //       'class':'hide-desktop'
+        //     }]
+      })
+      .draw();
 
     // Add a listener to resize chart with the window.
     window.addEventListener('resize', this.resize);

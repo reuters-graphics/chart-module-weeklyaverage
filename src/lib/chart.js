@@ -1,6 +1,7 @@
 import { getDates, round } from './utils/utils';
 
 import ChartComponent from './base/ChartComponent';
+import Mustache from 'mustache';
 import d3 from './utils/d3';
 
 // import defaultData from './defaultData.json';
@@ -27,7 +28,7 @@ class WeeklyAverage extends ChartComponent {
     text: {
       daily_numbers: 'Daily new ',
       tooltip_suffix: ' new ',
-      avg: '-day average',
+      avg: '{{ average }}-day average',
       per_pop_tt_suffix: ' per 100k people in the population',
     },
   };
@@ -174,7 +175,7 @@ class WeeklyAverage extends ChartComponent {
       avg_label.appendSelect('text')
         .attr('dx', -10)
         .attr('dy', -5)
-        .text(`${props.avg_days}${props.text.avg}`);
+        .text(Mustache.render(props.text.avg, { average: props.avg_days }));
 
       // new numbers label
 
