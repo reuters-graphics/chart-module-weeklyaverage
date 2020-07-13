@@ -48,6 +48,7 @@ class WeeklyAverage extends ChartComponent {
     const props = this.props();
     const node = this.selection().node();
     let dateList = [];
+    let yRange;
 
     const { width } = node.getBoundingClientRect();
     const transition = d3.transition()
@@ -55,7 +56,7 @@ class WeeklyAverage extends ChartComponent {
 
     if (props.text.subhed.length > 0) {
       this.selection()
-        .appendSelect('p.subhed')
+        .appendSelect('h6.chart-title')
         .text(props.text.subhed);
     }
     const gOuter = this.selection()
@@ -98,7 +99,12 @@ class WeeklyAverage extends ChartComponent {
         .domain(dateList)
         .padding(props.padding);
 
-      const yRange = d3.extent(data, d => +d.use_count)
+      if (props.bars) {
+        yRange = d3.extent(data, d => +d.use_count);
+      } else {
+        yRange = d3.extent(data, d => +d.use_mean);
+      }
+
       // y scale
       const scaleY = d3.scaleLinear()
         .range([props.height - props.margin.bottom - props.margin.top, 0])
@@ -109,48 +115,6 @@ class WeeklyAverage extends ChartComponent {
         .x(d => scaleX(dateParse(d.date)))
         .y(d => scaleY(d.use_mean ? d.use_mean : 0))
         .curve(d3.curveMonotoneX);
-
-      if (props.left_y_axis) {
-        const label_container = g.appendSelect('g.labels');
-        const max = d3.max(data, d => d.use_mean);
-        const max_var = data.filter(d => d.use_mean === max)[0];
-        const max_plot_val = round(max_var.use_mean,0)
-        const new_nos_label = label_container.appendSelect('g.new-nos-label')
-          .attr('transform', `translate(${scaleX(dateParse(max_var.date))},${scaleY(max_plot_val)})`);
-
-        new_nos_label.appendSelect('line')
-          .attr('x1', -10)
-          .attr('x2', 0)
-          .attr('y1', 0)
-          .attr('y2', 0);
-
-        new_nos_label.appendSelect('text')
-          .style('text-anchor', 'end')
-          .attr('dx', -10)
-          .attr('dy', 4)
-          .text(max_plot_val);
-      } else {
-        let ticks;
-        if (yRange[1] === 2) {
-          ticks = 2;
-        } else if (!props.bars || yRange[1] ===1 ) {
-          ticks = 1;
-        } else {
-          ticks = 3;
-        }
-
-        g.appendSelect('g.axis--y')
-          .attr('class', 'axis--y axis')
-          .transition(transition)
-          .attr('transform', `translate(${width - props.margin.right - props.margin.left},0)`)
-          .call(d3.axisRight(scaleY).ticks(ticks));
-
-        g.select('.axis--y').selectAll('.tick').each(function(d) {
-          if (d === 0) {
-            this.remove();
-          }
-        });
-      }
 
       if (props.x_axis) {
         g.appendSelect('g.axis--x')
@@ -253,22 +217,66 @@ class WeeklyAverage extends ChartComponent {
 
         // GET MAX
 
-        const max = d3.max(data, d => d.use_count);
-        const max_var = data.filter(d => d.use_count == max)[0];
+        if (props.bars) {
+          const max = d3.max(data, d => d.use_count);
+          const max_var = data.filter(d => d.use_count == max)[0];
+          const new_nos_label = label_container.appendSelect('g.new-nos-label')
+            .attr('transform', `translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.use_count)})`);
+
+          new_nos_label.appendSelect('line')
+            .attr('x1', -10)
+            .attr('x2', 0)
+            .attr('y1', 10)
+            .attr('y2', 10);
+
+          new_nos_label.appendSelect('text')
+            .style('text-anchor', 'end')
+            .attr('dx', -13)
+            .attr('dy', 12)
+            .text(`${props.text.daily_numbers + props.variable_name}`);
+        }
+      }
+
+      if (props.left_y_axis) {
+        const label_container = g.appendSelect('g.labels');
+        const max = d3.max(data, d => d.use_mean);
+        const max_var = data.filter(d => d.use_mean === max)[0];
+        const max_plot_val = round(max_var.use_mean,0)
         const new_nos_label = label_container.appendSelect('g.new-nos-label')
-          .attr('transform', `translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.use_count)})`);
+          .attr('transform', `translate(${scaleX(dateParse(max_var.date))},${scaleY(max_plot_val)})`);
 
         new_nos_label.appendSelect('line')
           .attr('x1', -10)
           .attr('x2', 0)
-          .attr('y1', 10)
-          .attr('y2', 10);
+          .attr('y1', 0)
+          .attr('y2', 0);
 
         new_nos_label.appendSelect('text')
           .style('text-anchor', 'end')
-          .attr('dx', -13)
-          .attr('dy', 12)
-          .text(`${props.text.daily_numbers + props.variable_name}`);
+          .attr('dx', -10)
+          .attr('dy', 4)
+          .text(numberFormat_tt(max_plot_val));
+      } else {
+        let ticks;
+        if (yRange[1] === 2) {
+          ticks = 2;
+        } else if (!props.bars || yRange[1] ===1 ) {
+          ticks = 1;
+        } else {
+          ticks = 3;
+        }
+
+        g.appendSelect('g.axis--y')
+          .attr('class', 'axis--y axis')
+          .transition(transition)
+          .attr('transform', `translate(${width - props.margin.right - props.margin.left},0)`)
+          .call(d3.axisRight(scaleY).ticks(ticks));
+
+        g.select('.axis--y').selectAll('.tick').each(function(d) {
+          if (d === 0) {
+            this.remove();
+          }
+        });
       }
       // tooltip
       const tooltipBox = this.selection()

@@ -20,7 +20,7 @@ class ChartComponent extends React.Component {
       .data(defaultData)
       .props({
         // population: 370000000,
-        // labels: true,
+        labels: true,
         // x_axis: false,
         // bars: false,
         left_y_axis: true,
@@ -28,6 +28,9 @@ class ChartComponent extends React.Component {
         // margin:{
         //   left: 0,bottom: 0,top:0
         // }
+        text: {
+          subhed: '7-day average'
+        },
         // annotations:[
         //     {
         //       'date':'2020-02-12',
