@@ -22,7 +22,7 @@ class ChartComponent extends React.Component {
         // population: 370000000,
         labels: true,
         x_axis: false,
-        // bars: false,
+        bars: false,
         // left_y_axis: true,
         // date_range: ['2020-03-01','2020-06-02'], // YYYY-MM-DD format
         // margin:{
@@ -40,8 +40,8 @@ class ChartComponent extends React.Component {
         //     {
         //       'date':'2020-05-25',
         //       'text':'Hubei revises methodology',
-        //       'class':'hide-desktop'
-        //     }]
+        //       'class':'hide-desktop'}
+            // ]
       })
       .draw();
 
