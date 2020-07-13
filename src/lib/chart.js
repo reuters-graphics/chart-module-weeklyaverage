@@ -9,6 +9,7 @@ import d3 from './utils/d3';
 
 const dateParse = d3.timeParse('%Y-%m-%d');
 const dateFormat = d3.timeFormat('%b %e');
+const dateFormatMatch = d3.timeFormat('%Y-%m-%d');
 const dateFormat_tt = d3.timeFormat('%B %e');
 const numberFormat_tt = d3.format(',');
 
@@ -49,6 +50,7 @@ class WeeklyAverage extends ChartComponent {
     const node = this.selection().node();
     let dateList = [];
     let yRange;
+    let allDates = [];
 
     const { width } = node.getBoundingClientRect();
     const transition = d3.transition()
@@ -59,24 +61,18 @@ class WeeklyAverage extends ChartComponent {
         .appendSelect('h6.chart-title')
         .text(props.text.subhed);
     }
+
     const gOuter = this.selection()
       .appendSelect('svg') // see docs in ./utils/d3.js
       .attr('width', width)
       .attr('height', props.height);
+    
     const g = gOuter.appendSelect('g')
       .attr('transform', `translate(${props.margin.left}, ${props.margin.top})`);
 
     if (d3.sum(data, d => d.count) > 0) {
 
       gOuter.select('.no-data').remove()
-
-      data.forEach(function(d, i) {
-        d.use_count = (props.population) ? (d.count / props.population * 100000) : d.count;
-        d.use_count = d.use_count<0?0:d.use_count
-        d.mean = d3.mean(data.slice((i - props.avg_days), i), d => +d.count); // avg calc
-        d.use_mean = (props.population) ? (d.mean / props.population * 100000) : d.mean;
-        d.use_mean = d.use_mean<0?0:d.use_mean
-      });
 
       if (props.date_range.length > 1) {
         const startDate = dateParse(props.date_range[0]);
@@ -92,6 +88,30 @@ class WeeklyAverage extends ChartComponent {
         dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
       }
 
+      dateList.forEach(function(d) {
+        const o = data.filter(e => e.date === dateFormatMatch(d));
+
+        const obj = {
+          date: d,
+        };
+
+        if (!o[0]) {
+          obj.count = 0;
+        } else {
+          obj.count = o[0].count;
+        }
+
+        allDates.push(obj);
+      });
+
+      allDates.forEach(function(d, i) {
+        d.use_count = (props.population) ? (d.count / props.population * 100000) : d.count;
+        d.use_count = d.use_count<0?0:d.use_count
+        d.mean = d3.mean(allDates.slice((i - props.avg_days), i), d => +d.count); // avg calc
+        d.use_mean = (props.population) ? (d.mean / props.population * 100000) : d.mean;
+        d.use_mean = d.use_mean<0?0:d.use_mean
+      });
+
       // x scale
       const scaleX = d3.scaleBand()
         .round(false)
@@ -100,9 +120,9 @@ class WeeklyAverage extends ChartComponent {
         .padding(props.padding);
 
       if (props.bars) {
-        yRange = d3.extent(data, d => +d.use_count);
+        yRange = d3.extent(allDates, d => +d.use_count);
       } else {
-        yRange = d3.extent(data, d => +d.use_mean);
+        yRange = d3.extent(allDates, d => +d.use_mean);
       }
 
       // y scale
@@ -112,7 +132,7 @@ class WeeklyAverage extends ChartComponent {
 
       // line
       const line = d3.line()
-        .x(d => scaleX(dateParse(d.date)))
+        .x(d => scaleX(d.date))
         .y(d => scaleY(d.use_mean ? d.use_mean : 0))
         .curve(d3.curveMonotoneX);
 
@@ -127,19 +147,19 @@ class WeeklyAverage extends ChartComponent {
       if (props.bars) {
         const bars = g.appendSelect('g.bars-container')
           .selectAll('.bar')
-          .data(data, (d, i) => d.date); // for smooth data updation
+          .data(allDates, (d, i) => d.date); // for smooth data updation
 
         bars.enter().append('rect')
-          .attr('class', d => `bar d-${d.date.replace(/-/g, '')}`)
+          .attr('class', d => `bar d-${dateFormatMatch(d.date).replace(/-/g, '')}`)
           .style('fill', props.fill)
           .attr('height', d => scaleY(0) - scaleY(+d.use_count))
-          .attr('x', (d, i) => scaleX(dateParse(d.date)))
+          .attr('x', (d, i) => scaleX(d.date))
           .attr('y', d => scaleY(+d.use_count))
           .attr('width', scaleX.bandwidth())
           .merge(bars)
           .transition(transition)
           .attr('height', d => scaleY(0) - scaleY(+d.use_count))
-          .attr('x', (d, i) => scaleX(dateParse(d.date)))
+          .attr('x', (d, i) => scaleX(d.date))
           .attr('y', d => scaleY(+d.use_count))
           .attr('width', scaleX.bandwidth());
 
@@ -150,7 +170,7 @@ class WeeklyAverage extends ChartComponent {
 
         const bars_dummy = g.appendSelect('g.dummy-container')
           .selectAll('.dummy')
-          .data(data, (d, i) => d.date);
+          .data(allDates, (d, i) => d.date);
 
         bars_dummy.enter()
           .append('rect')
@@ -158,7 +178,7 @@ class WeeklyAverage extends ChartComponent {
           .attr('class', 'dummy')
           .style('opacity', 0)
           .attr('height', d => props.height)
-          .attr('x', (d, i) => scaleX(dateParse(d.date)))
+          .attr('x', (d, i) => scaleX(d.date))
           .attr('y', d => 0)
           .attr('width', scaleX.bandwidth())
           .on('mouseover', showTooltip)
@@ -166,7 +186,7 @@ class WeeklyAverage extends ChartComponent {
           .merge(bars_dummy)
           .transition(transition)
           .attr('height', d => props.height)
-          .attr('x', (d, i) => scaleX(dateParse(d.date)))
+          .attr('x', (d, i) => scaleX(d.date))
           .attr('y', d => 0)
           .attr('width', scaleX.bandwidth());
 
@@ -181,7 +201,7 @@ class WeeklyAverage extends ChartComponent {
 
       // avg line
       const avg_line = g.selectAll('.avg-line')
-        .data([data]);
+        .data([allDates]);
 
       avg_line.enter()
         .append('path')
@@ -196,10 +216,14 @@ class WeeklyAverage extends ChartComponent {
       // LABELS
       if (props.labels) {
         const label_container = g.appendSelect('g.labels');
-
+        let useDay = 30
+        let labelX = scaleX(allDates[useDay].date);
+        if (labelX < ((width-props.margin.left-props.margin.right) * .18)) {
+          useDay = allDates.length - 30;
+        }
         // avg label
         const avg_label = label_container.appendSelect('g.avg-label')
-          .attr('transform', `translate(${scaleX(dateParse(data[props.avg_days].date))},${scaleY(data[props.avg_days].use_mean) - props.height / 20})`);
+          .attr('transform', `translate(${scaleX(allDates[useDay].date)},${scaleY(allDates[useDay].use_mean) - props.height / 20})`);
 
         avg_label.appendSelect('line')
           .attr('x1', 0)
@@ -218,10 +242,10 @@ class WeeklyAverage extends ChartComponent {
         // GET MAX
 
         if (props.bars) {
-          const max = d3.max(data, d => d.use_count);
-          const max_var = data.filter(d => d.use_count == max)[0];
+          const max = d3.max(allDates, d => d.use_count);
+          const max_var = allDates.filter(d => d.use_count == max)[0];
           const new_nos_label = label_container.appendSelect('g.new-nos-label')
-            .attr('transform', `translate(${scaleX(dateParse(max_var.date))},${scaleY(max_var.use_count)})`);
+            .attr('transform', `translate(${scaleX(max_var.date)},${scaleY(max_var.use_count)})`);
 
           new_nos_label.appendSelect('line')
             .attr('x1', -10)
@@ -239,11 +263,11 @@ class WeeklyAverage extends ChartComponent {
 
       if (props.left_y_axis) {
         const label_container = g.appendSelect('g.labels');
-        const max = d3.max(data, d => d.use_mean);
-        const max_var = data.filter(d => d.use_mean === max)[0];
+        const max = d3.max(allDates, d => d.use_mean);
+        const max_var = allDates.filter(d => d.use_mean === max)[0];
         const max_plot_val = round(max_var.use_mean,0)
         const new_nos_label = label_container.appendSelect('g.new-nos-label')
-          .attr('transform', `translate(${scaleX(dateParse(max_var.date))},${scaleY(max_plot_val)})`);
+          .attr('transform', `translate(${scaleX(max_var.date)},${scaleY(max_plot_val)})`);
 
         new_nos_label.appendSelect('line')
           .attr('x1', -10)
@@ -287,12 +311,12 @@ class WeeklyAverage extends ChartComponent {
       function showTooltip(obj) {
         const tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
         const formatFunction = props.population ? round : numberFormat_tt;
-        g.select(`.bar.d-${obj.date.replace(/-/g, '')}`)
+        g.select(`.bar.d-${dateFormatMatch(obj.date).replace(/-/g, '')}`)
           .classed('active', true);
 
         const coords = [];
 
-        coords[0] = scaleX(dateParse(obj.date)) + props.margin.left + (scaleX.bandwidth() / 2);
+        coords[0] = scaleX(obj.date) + props.margin.left + (scaleX.bandwidth() / 2);
         coords[1] = scaleY(obj.use_count) + props.margin.top;
 
         const q = getTooltipType(coords, [props.height, width]);

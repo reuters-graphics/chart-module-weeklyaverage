@@ -551,6 +551,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       var props = this.props();
       var node = this.selection().node();
       var dateList = [];
+      var yRange;
 
       var _node$getBoundingClie = node.getBoundingClientRect(),
           width = _node$getBoundingClie.width;
@@ -558,7 +559,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       var transition = d3.transition().duration(750);
 
       if (props.text.subhed.length > 0) {
-        this.selection().appendSelect('p.subhed').text(props.text.subhed);
+        this.selection().appendSelect('h6.chart-title').text(props.text.subhed);
       }
 
       var gOuter = this.selection().appendSelect('svg') // see docs in ./utils/d3.js
@@ -641,9 +642,17 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
 
 
         var scaleX = d3.scaleBand().round(false).range([0, width - props.margin.right - props.margin.left]).domain(dateList).padding(props.padding);
-        var yRange = d3.extent(data, function (d) {
-          return +d.use_count;
-        }); // y scale
+
+        if (props.bars) {
+          yRange = d3.extent(data, function (d) {
+            return +d.use_count;
+          });
+        } else {
+          yRange = d3.extent(data, function (d) {
+            return +d.use_mean;
+          });
+        } // y scale
+
 
         var scaleY = d3.scaleLinear().range([props.height - props.margin.bottom - props.margin.top, 0]).domain(yRange); // line
 
@@ -652,37 +661,6 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         }).y(function (d) {
           return scaleY(d.use_mean ? d.use_mean : 0);
         }).curve(d3.curveMonotoneX);
-
-        if (props.left_y_axis) {
-          var label_container = g.appendSelect('g.labels');
-          var max = d3.max(data, function (d) {
-            return d.use_mean;
-          });
-          var max_var = data.filter(function (d) {
-            return d.use_mean === max;
-          })[0];
-          var max_plot_val = round(max_var.use_mean, 0);
-          var new_nos_label = label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(dateParse(max_var.date)), ",").concat(scaleY(max_plot_val), ")"));
-          new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 0).attr('y2', 0);
-          new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -10).attr('dy', 4).text(max_plot_val);
-        } else {
-          var ticks;
-
-          if (yRange[1] === 2) {
-            ticks = 2;
-          } else if (!props.bars || yRange[1] === 1) {
-            ticks = 1;
-          } else {
-            ticks = 3;
-          }
-
-          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks));
-          g.select('.axis--y').selectAll('.tick').each(function (d) {
-            if (d === 0) {
-              this.remove();
-            }
-          });
-        }
 
         if (props.x_axis) {
           g.appendSelect('g.axis--x').attr('class', 'axis--x axis').transition(transition).attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
@@ -734,30 +712,62 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         avg_line.enter().append('path').attr('class', 'avg-line').merge(avg_line).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth); // LABELS
 
         if (props.labels) {
-          var _label_container = g.appendSelect('g.labels'); // avg label
+          var label_container = g.appendSelect('g.labels'); // avg label
 
-
-          var avg_label = _label_container.appendSelect('g.avg-label').attr('transform', "translate(".concat(scaleX(dateParse(data[props.avg_days].date)), ",").concat(scaleY(data[props.avg_days].use_mean) - props.height / 20, ")"));
-
+          var avg_label = label_container.appendSelect('g.avg-label').attr('transform', "translate(".concat(scaleX(dateParse(data[props.avg_days].date)), ",").concat(scaleY(data[props.avg_days].use_mean) - props.height / 20, ")"));
           avg_label.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y1', props.height / 20).attr('y2', 0);
           avg_label.appendSelect('text').attr('dx', -10).attr('dy', -5).style('text-anchor', 'middle').text(Mustache.render(props.text.avg, {
             average: props.avg_days
           })); // new numbers label
           // GET MAX
 
+          if (props.bars) {
+            var max = d3.max(data, function (d) {
+              return d.use_count;
+            });
+            var max_var = data.filter(function (d) {
+              return d.use_count == max;
+            })[0];
+            var new_nos_label = label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(dateParse(max_var.date)), ",").concat(scaleY(max_var.use_count), ")"));
+            new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
+            new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text("".concat(props.text.daily_numbers + props.variable_name));
+          }
+        }
+
+        if (props.left_y_axis) {
+          var _label_container = g.appendSelect('g.labels');
+
           var _max = d3.max(data, function (d) {
-            return d.use_count;
+            return d.use_mean;
           });
 
           var _max_var = data.filter(function (d) {
-            return d.use_count == _max;
+            return d.use_mean === _max;
           })[0];
+          var max_plot_val = round(_max_var.use_mean, 0);
 
-          var _new_nos_label = _label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(dateParse(_max_var.date)), ",").concat(scaleY(_max_var.use_count), ")"));
+          var _new_nos_label = _label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(dateParse(_max_var.date)), ",").concat(scaleY(max_plot_val), ")"));
 
-          _new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
+          _new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 0).attr('y2', 0);
 
-          _new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text("".concat(props.text.daily_numbers + props.variable_name));
+          _new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -10).attr('dy', 4).text(numberFormat_tt(max_plot_val));
+        } else {
+          var ticks;
+
+          if (yRange[1] === 2) {
+            ticks = 2;
+          } else if (!props.bars || yRange[1] === 1) {
+            ticks = 1;
+          } else {
+            ticks = 3;
+          }
+
+          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks));
+          g.select('.axis--y').selectAll('.tick').each(function (d) {
+            if (d === 0) {
+              this.remove();
+            }
+          });
         } // tooltip
 
 
