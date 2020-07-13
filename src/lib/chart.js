@@ -67,8 +67,10 @@ class WeeklyAverage extends ChartComponent {
     if (d3.sum(data, d => d.count) > 0) {
       data.forEach(function(d, i) {
         d.use_count = (props.population) ? (d.count / props.population * 100000) : d.count;
+        d.use_count = d.use_count<0?0:d.use_count
         d.mean = d3.mean(data.slice((i - props.avg_days), i), d => +d.count); // avg calc
         d.use_mean = (props.population) ? (d.mean / props.population * 100000) : d.mean;
+        d.use_mean = d.use_mean<0?0:d.use_mean
       });
 
       if (props.date_range.length > 1) {
@@ -160,13 +162,13 @@ class WeeklyAverage extends ChartComponent {
         bars.enter().append('rect')
           .attr('class', d => `bar d-${d.date.replace(/-/g, '')}`)
           .style('fill', props.fill)
-          .attr('height', d => scaleY(yRange[0]) - scaleY(+d.use_count))
+          .attr('height', d => scaleY(0) - scaleY(+d.use_count))
           .attr('x', (d, i) => scaleX(dateParse(d.date)))
           .attr('y', d => scaleY(+d.use_count))
           .attr('width', scaleX.bandwidth())
           .merge(bars)
           .transition(transition)
-          .attr('height', d => scaleY(yRange[0]) - scaleY(+d.use_count))
+          .attr('height', d => scaleY(0) - scaleY(+d.use_count))
           .attr('x', (d, i) => scaleX(dateParse(d.date)))
           .attr('y', d => scaleY(+d.use_count))
           .attr('width', scaleX.bandwidth());
