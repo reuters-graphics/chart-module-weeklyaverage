@@ -61,12 +61,13 @@ body{
   .annotations-container{
   		pointer-events: none;
   		line{
-  			stroke: #888;
+  			stroke: $half-white;
   			stroke-width: .5;
   			stroke-dasharray: 5;
   		}
   		text{
-  			text-shadow: 2px 2px 2px #fcfcfc, 2px 2px 2px #eee, 0 -2px 0 #fff, -2px 0 0 #fff;
+        text-shadow: 2px 2px 2px $dark-blue, 2px 2px 2px $dark-blue, 0 -2px 0 $dark-blue, -2px 0 0 $dark-blue;
+        fill: $half-white;
   			&.date{
   				font-weight: bold;
   				font-size: .9rem;
