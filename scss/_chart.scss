@@ -1,6 +1,12 @@
 #{$WeeklyAverage-container} {
-
+  
   /* Write your chart styles here */
+  .subhed{
+    font-size: .9rem;
+    font-weight: bold;
+    padding-left: 1rem;     
+  }
+
   .domain{
   	display: none;
   }

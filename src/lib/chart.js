@@ -23,22 +23,29 @@ class WeeklyAverage extends ChartComponent {
     bars: true,
     padding: 0,
     labels: false,
+    x_axis: true,
     variable_name: 'cases',
+    date_range: [],
+    left_y_axis: false,
+    margin: {
+      left: 20, right: 50, top: 10, bottom: 30
+    },
     text: {
       daily_numbers: 'Daily new ',
       tooltip_suffix: ' new ',
       avg: '{{ average }}-day average',
       per_pop_tt_suffix: ' per 100k people in the population',
+      subhed: '',
     },
   };
 
   defaultData = [];
 
   draw() {
-    const data = this.data();
+    let data = this.data();
     const props = this.props();
     const node = this.selection().node();
-    const margin = { left: 20, right: 50, top: 10, bottom: 30 };
+    let dateList=[];
 
     data.forEach(function(d, i) {
       d.use_count = (props.population) ? (d.count / props.population * 100000) : d.count;
@@ -46,29 +53,46 @@ class WeeklyAverage extends ChartComponent {
       d.use_mean = (props.population) ? (d.mean / props.population * 100000) : d.mean;
     });
 
+    if (props.date_range.length > 1) {
+      const startDate = dateParse(props.date_range[0]);
+      const endDate = dateParse(props.date_range[1]);
+
+      if (startDate < endDate && endDate <= d3.max(data, d => dateParse(d.date))) {
+        data = data.filter(d => dateParse(d.date) > startDate && dateParse(d.date) < endDate);
+        dateList = getDates(startDate, endDate);
+      } else {
+        dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
+      }
+    } else {
+      dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
+    }
+
     const { width } = node.getBoundingClientRect();
     const transition = d3.transition()
       .duration(750);
 
+    if (props.text.subhed.length > 0) {
+      this.selection()
+        .appendSelect('p.subhed')
+        .text(props.text.subhed);
+    }
     const g = this.selection()
       .appendSelect('svg') // see docs in ./utils/d3.js
       .attr('width', width)
       .attr('height', props.height)
       .appendSelect('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`);
-
-    const dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date)); // needs reworking
+      .attr('transform', `translate(${props.margin.left}, ${props.margin.top})`);
 
     // x scale
     const scaleX = d3.scaleBand()
       .round(false)
-      .range([0, width - margin.right - margin.left])
+      .range([0, width - props.margin.right - props.margin.left])
       .domain(dateList)
       .padding(props.padding);
 
     // y scale
     const scaleY = d3.scaleLinear()
-      .range([props.height - margin.bottom - margin.top, 0])
+      .range([props.height - props.margin.bottom - props.margin.top, 0])
       .domain(d3.extent(data, d => +d.use_count));
 
     // line
@@ -76,17 +100,33 @@ class WeeklyAverage extends ChartComponent {
       .x(d => scaleX(dateParse(d.date)))
       .y(d => scaleY(d.use_mean ? d.use_mean : 0));
 
-    g.appendSelect('g.axis--y')
-      .attr('class', 'axis--y axis')
-      .transition(transition)
-      .attr('transform', `translate(${width - margin.right - margin.left},0)`)
-      .call(d3.axisRight(scaleY).ticks(props.bars ? 3 : 1));
+    if (props.left_y_axis) {
+      g.appendSelect('g.axis--y')
+        .attr('class', 'axis--y axis')
+        .transition(transition)
+        .attr('transform', 'translate(60,0)')
+        .call(d3.axisLeft(scaleY).ticks(1));
+    } else {
+      g.appendSelect('g.axis--y')
+        .attr('class', 'axis--y axis')
+        .transition(transition)
+        .attr('transform', `translate(${width - props.margin.right - props.margin.left},0)`)
+        .call(d3.axisRight(scaleY).ticks(props.bars ? 3 : 1));
+    }
 
-    g.appendSelect('g.axis--x')
-      .attr('class', 'axis--x axis')
-      .transition(transition)
-      .attr('transform', `translate(0,${props.height - margin.bottom - margin.top})`)
-      .call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
+    g.select('.axis--y').selectAll('.tick').each(function(d) {
+      if (d === 0) {
+        this.remove();
+      }
+    });
+
+    if (props.x_axis) {
+      g.appendSelect('g.axis--x')
+        .attr('class', 'axis--x axis')
+        .transition(transition)
+        .attr('transform', `translate(0,${props.height - props.margin.bottom - props.margin.top})`)
+        .call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
+    }
 
     if (props.bars) {
       const bars = g.appendSelect('g.bars-container')
@@ -96,13 +136,13 @@ class WeeklyAverage extends ChartComponent {
       bars.enter().append('rect')
         .attr('class', d => `bar d-${d.date.replace(/-/g, '')}`)
         .style('fill', props.fill)
-        .attr('height', d => (props.height - margin.top - margin.bottom) - scaleY(+d.use_count))
+        .attr('height', d => (props.height - props.margin.top - props.margin.bottom) - scaleY(+d.use_count))
         .attr('x', (d, i) => scaleX(dateParse(d.date)))
         .attr('y', d => scaleY(+d.use_count))
         .attr('width', scaleX.bandwidth())
         .merge(bars)
         .transition(transition)
-        .attr('height', d => (props.height - margin.top - margin.bottom) - scaleY(+d.use_count))
+        .attr('height', d => (props.height - props.margin.top - props.margin.bottom) - scaleY(+d.use_count))
         .attr('x', (d, i) => scaleX(dateParse(d.date)))
         .attr('y', d => scaleY(+d.use_count))
         .attr('width', scaleX.bandwidth());
@@ -211,8 +251,8 @@ class WeeklyAverage extends ChartComponent {
 
       const coords = [];
 
-      coords[0] = scaleX(dateParse(obj.date)) + margin.left + (scaleX.bandwidth() / 2);
-      coords[1] = scaleY(obj.use_count) + margin.top;
+      coords[0] = scaleX(dateParse(obj.date)) + props.margin.left + (scaleX.bandwidth() / 2);
+      coords[1] = scaleY(obj.use_count) + props.margin.top;
 
       const q = getTooltipType(coords, [props.height, width]);
 
@@ -292,7 +332,7 @@ class WeeklyAverage extends ChartComponent {
             return props.height / 6 * 4 - 10;
           }
         })
-        .attr('y1', props.height - margin.top - margin.bottom);
+        .attr('y1', props.height - props.margin.top - props.margin.bottom);
 
       const text_container = annotation.appendSelect('g.text-container')
         .attr('transform', function(d) {

@@ -1,7 +1,6 @@
 import Chart from '../lib/chart.js';
 import ChartContainer from './furniture/ChartContainer';
 import React from 'react';
-import d3 from '../lib/utils/d3';
 import debounce from 'lodash/debounce';
 import defaultData from './defaultData.json';
 
@@ -21,7 +20,14 @@ class ChartComponent extends React.Component {
       .data(defaultData)
       .props({
         // population: 370000000,
-        labels: true,
+        // labels: false,
+        // x_axis: false,
+        // bars: false,
+        // left_y_axis: true,
+        // date_range: ['2020-03-01','2020-06-02'], // YYYY-MM-DD format
+        // margin:{
+        //   left: 0,bottom: 0,top:0
+        // }
         // bars: false,
         // annotations:[
         //     {

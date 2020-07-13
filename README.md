@@ -54,8 +54,21 @@ myChart
 	labels: false, // Setting this to true will show a label
                    // to explain what the bars and line are
 
+  left_y_axis: false, // Set false by default, setting to true will have
+                      // only the max value displayed on the left
+
+  x_axis: true, // Set true by default, setting to false will hide the x-axis.
+
+  date_range: ['2020-03-01','2020-07-02'], // Pass two dates in a YYYY-MM-DD 
+                                // format to filter the data based on that.
+                                // Leaving it empty will put all the data on the chart
+  margin: {
+      left: 20, right: 50, top: 10, bottom: 30
+    }, // Pass only the variables that you want to overwrite
+
 	variable_name: 'cases', // What is this a chart of? Infections? Deaths? Tests?
-	text: { // Here we pass all the text lines in the chart
+	
+  text: { // Here we pass all the text lines in the chart
 
 	  daily_numbers: 'Daily new ', 
 	  // Bar label says daily new cases
@@ -67,6 +80,8 @@ myChart
 
 	  per_pop_tt_suffix: ' per 100k people in the population', // if normalised by 
 	  // population, tooltip will say XXXXX new cases per 100k people in the population
+
+    subhed: '' // empty by default. Can receive a string for a subhed above the chart
 	},
   )
   .draw();
