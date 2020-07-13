@@ -517,12 +517,22 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       bars: true,
       padding: 0,
       labels: false,
+      x_axis: true,
       variable_name: 'cases',
+      date_range: [],
+      left_y_axis: false,
+      margin: {
+        left: 20,
+        right: 50,
+        top: 10,
+        bottom: 30
+      },
       text: {
         daily_numbers: 'Daily new ',
         tooltip_suffix: ' new ',
         avg: '{{ average }}-day average',
-        per_pop_tt_suffix: ' per 100k people in the population'
+        per_pop_tt_suffix: ' per 100k people in the population',
+        subhed: ''
       }
     });
 
@@ -537,12 +547,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       var data = this.data();
       var props = this.props();
       var node = this.selection().node();
-      var margin = {
-        left: 20,
-        right: 50,
-        top: 10,
-        bottom: 30
-      };
+      var dateList = [];
       data.forEach(function (d, i) {
         d.use_count = props.population ? d.count / props.population * 100000 : d.count;
         d.mean = d3.mean(data.slice(i - props.avg_days, i), function (d) {
@@ -552,18 +557,39 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         d.use_mean = props.population ? d.mean / props.population * 100000 : d.mean;
       });
 
+      if (props.date_range.length > 1) {
+        var startDate = dateParse(props.date_range[0]);
+        var endDate = dateParse(props.date_range[1]);
+
+        if (startDate < endDate && endDate <= d3.max(data, function (d) {
+          return dateParse(d.date);
+        })) {
+          data = data.filter(function (d) {
+            return dateParse(d.date) > startDate && dateParse(d.date) < endDate;
+          });
+          dateList = getDates(startDate, endDate);
+        } else {
+          dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
+        }
+      } else {
+        dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
+      }
+
       var _node$getBoundingClie = node.getBoundingClientRect(),
           width = _node$getBoundingClie.width;
 
       var transition = d3.transition().duration(750);
+
+      if (props.text.subhed.length > 0) {
+        this.selection().appendSelect('p.subhed').text(props.text.subhed);
+      }
+
       var g = this.selection().appendSelect('svg') // see docs in ./utils/d3.js
-      .attr('width', width).attr('height', props.height).appendSelect('g').attr('transform', "translate(".concat(margin.left, ", ").concat(margin.top, ")"));
-      var dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date)); // needs reworking
-      // x scale
+      .attr('width', width).attr('height', props.height).appendSelect('g').attr('transform', "translate(".concat(props.margin.left, ", ").concat(props.margin.top, ")")); // x scale
 
-      var scaleX = d3.scaleBand().round(false).range([0, width - margin.right - margin.left]).domain(dateList).padding(props.padding); // y scale
+      var scaleX = d3.scaleBand().round(false).range([0, width - props.margin.right - props.margin.left]).domain(dateList).padding(props.padding); // y scale
 
-      var scaleY = d3.scaleLinear().range([props.height - margin.bottom - margin.top, 0]).domain(d3.extent(data, function (d) {
+      var scaleY = d3.scaleLinear().range([props.height - props.margin.bottom - props.margin.top, 0]).domain(d3.extent(data, function (d) {
         return +d.use_count;
       })); // line
 
@@ -572,8 +598,22 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       }).y(function (d) {
         return scaleY(d.use_mean ? d.use_mean : 0);
       });
-      g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - margin.right - margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(props.bars ? 3 : 1));
-      g.appendSelect('g.axis--x').attr('class', 'axis--x axis').transition(transition).attr('transform', "translate(0,".concat(props.height - margin.bottom - margin.top, ")")).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
+
+      if (props.left_y_axis) {
+        g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', 'translate(60,0)').call(d3.axisLeft(scaleY).ticks(1));
+      } else {
+        g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(props.bars ? 3 : 1));
+      }
+
+      g.select('.axis--y').selectAll('.tick').each(function (d) {
+        if (d === 0) {
+          this.remove();
+        }
+      });
+
+      if (props.x_axis) {
+        g.appendSelect('g.axis--x').attr('class', 'axis--x axis').transition(transition).attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
+      }
 
       if (props.bars) {
         var bars = g.appendSelect('g.bars-container').selectAll('.bar').data(data, function (d, i) {
@@ -583,13 +623,13 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         bars.enter().append('rect').attr('class', function (d) {
           return "bar d-".concat(d.date.replace(/-/g, ''));
         }).style('fill', props.fill).attr('height', function (d) {
-          return props.height - margin.top - margin.bottom - scaleY(+d.use_count);
+          return props.height - props.margin.top - props.margin.bottom - scaleY(+d.use_count);
         }).attr('x', function (d, i) {
           return scaleX(dateParse(d.date));
         }).attr('y', function (d) {
           return scaleY(+d.use_count);
         }).attr('width', scaleX.bandwidth()).merge(bars).transition(transition).attr('height', function (d) {
-          return props.height - margin.top - margin.bottom - scaleY(+d.use_count);
+          return props.height - props.margin.top - props.margin.bottom - scaleY(+d.use_count);
         }).attr('x', function (d, i) {
           return scaleX(dateParse(d.date));
         }).attr('y', function (d) {
@@ -650,8 +690,8 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         var formatFunction = props.population ? round : numberFormat_tt;
         g.select(".bar.d-".concat(obj.date.replace(/-/g, ''))).classed('active', true);
         var coords = [];
-        coords[0] = scaleX(dateParse(obj.date)) + margin.left + scaleX.bandwidth() / 2;
-        coords[1] = scaleY(obj.use_count) + margin.top;
+        coords[0] = scaleX(dateParse(obj.date)) + props.margin.left + scaleX.bandwidth() / 2;
+        coords[1] = scaleY(obj.use_count) + props.margin.top;
         var q = getTooltipType(coords, [props.height, width]);
         tooltipBox.classed('tooltip-active', true).classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false).style('left', "".concat(coords[0], "px")).style('top', "".concat(coords[1], "px")).classed("tooltip-".concat(q), true);
         tt_inner.appendSelect('div.tt-header').text(dateFormat_tt(dateParse(obj.date)));
@@ -711,7 +751,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           } else {
             return props.height / 6 * 4 - 10;
           }
-        }).attr('y1', props.height - margin.top - margin.bottom);
+        }).attr('y1', props.height - props.margin.top - props.margin.bottom);
         var text_container = annotation.appendSelect('g.text-container').attr('transform', function (d) {
           if (scaleX(dateParse(d.date)) > width / 2) {
             return "translate(-8,".concat(props.height / 6 * 1.5, ")");
