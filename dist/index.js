@@ -532,7 +532,8 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         tooltip_suffix: ' new ',
         avg: '{{ average }}-day average',
         per_pop_tt_suffix: ' per 100k people in the population',
-        subhed: ''
+        subhed: '',
+        no_data: 'No reported '
       }
     });
 
@@ -548,32 +549,6 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       var props = this.props();
       var node = this.selection().node();
       var dateList = [];
-      data.forEach(function (d, i) {
-        d.use_count = props.population ? d.count / props.population * 100000 : d.count;
-        d.mean = d3.mean(data.slice(i - props.avg_days, i), function (d) {
-          return +d.count;
-        }); // avg calc
-
-        d.use_mean = props.population ? d.mean / props.population * 100000 : d.mean;
-      });
-
-      if (props.date_range.length > 1) {
-        var startDate = dateParse(props.date_range[0]);
-        var endDate = dateParse(props.date_range[1]);
-
-        if (startDate < endDate && endDate <= d3.max(data, function (d) {
-          return dateParse(d.date);
-        })) {
-          data = data.filter(function (d) {
-            return dateParse(d.date) > startDate && dateParse(d.date) < endDate;
-          });
-          dateList = getDates(startDate, endDate);
-        } else {
-          dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
-        }
-      } else {
-        dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
-      }
 
       var _node$getBoundingClie = node.getBoundingClientRect(),
           width = _node$getBoundingClie.width;
@@ -585,193 +560,253 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       }
 
       var g = this.selection().appendSelect('svg') // see docs in ./utils/d3.js
-      .attr('width', width).attr('height', props.height).appendSelect('g').attr('transform', "translate(".concat(props.margin.left, ", ").concat(props.margin.top, ")")); // x scale
+      .attr('width', width).attr('height', props.height).appendSelect('g').attr('transform', "translate(".concat(props.margin.left, ", ").concat(props.margin.top, ")"));
 
-      var scaleX = d3.scaleBand().round(false).range([0, width - props.margin.right - props.margin.left]).domain(dateList).padding(props.padding); // y scale
+      if (d3.sum(data, function (d) {
+        return d.count;
+      }) > 0) {
+        var showTooltip = function showTooltip(obj) {
+          var tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
+          var formatFunction = props.population ? round : numberFormat_tt;
+          g.select(".bar.d-".concat(obj.date.replace(/-/g, ''))).classed('active', true);
+          var coords = [];
+          coords[0] = scaleX(dateParse(obj.date)) + props.margin.left + scaleX.bandwidth() / 2;
+          coords[1] = scaleY(obj.use_count) + props.margin.top;
+          var q = getTooltipType(coords, [props.height, width]);
+          tooltipBox.classed('tooltip-active', true).classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false).style('left', "".concat(coords[0], "px")).style('top', "".concat(coords[1], "px")).classed("tooltip-".concat(q), true);
+          tt_inner.appendSelect('div.tt-header').text(dateFormat_tt(dateParse(obj.date)));
+          tt_inner.appendSelect('div.tt-row').text(formatFunction(obj.use_count) + props.text.tooltip_suffix + props.variable_name + tooltip_text_add);
+        };
 
-      var scaleY = d3.scaleLinear().range([props.height - props.margin.bottom - props.margin.top, 0]).domain(d3.extent(data, function (d) {
-        return +d.use_count;
-      })); // line
+        var hideTooltip = function hideTooltip() {
+          g.select('.bar.active').classed('active', false);
+          tooltipBox.classed('tooltip-active', false);
+        };
 
-      var line = d3.line().x(function (d) {
-        return scaleX(dateParse(d.date));
-      }).y(function (d) {
-        return scaleY(d.use_mean ? d.use_mean : 0);
-      });
+        var getTooltipType = function getTooltipType(coords, size) {
+          var l = [];
+          var ns_threshold = 4;
 
-      if (props.left_y_axis) {
-        g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', 'translate(60,0)').call(d3.axisLeft(scaleY).ticks(1));
-      } else {
-        g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(props.bars ? 3 : 1));
-      }
+          if (coords[1] > size[1] / ns_threshold) {
+            l.push('s');
+          } else {
+            l.push('n');
+          }
 
-      g.select('.axis--y').selectAll('.tick').each(function (d) {
-        if (d === 0) {
-          this.remove();
-        }
-      });
+          if (coords[0] > size[0] / 2) {
+            l.push('e');
+          }
 
-      if (props.x_axis) {
-        g.appendSelect('g.axis--x').attr('class', 'axis--x axis').transition(transition).attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
-      }
+          if (coords[0] < size[0] / 2) {
+            l.push('w');
+          }
 
-      if (props.bars) {
-        var bars = g.appendSelect('g.bars-container').selectAll('.bar').data(data, function (d, i) {
-          return d.date;
-        }); // for smooth data updation
+          return l.join('');
+        }; // Annotations
+        // Reposition if already on the page
 
-        bars.enter().append('rect').attr('class', function (d) {
-          return "bar d-".concat(d.date.replace(/-/g, ''));
-        }).style('fill', props.fill).attr('height', function (d) {
-          return props.height - props.margin.top - props.margin.bottom - scaleY(+d.use_count);
-        }).attr('x', function (d, i) {
-          return scaleX(dateParse(d.date));
-        }).attr('y', function (d) {
-          return scaleY(+d.use_count);
-        }).attr('width', scaleX.bandwidth()).merge(bars).transition(transition).attr('height', function (d) {
-          return props.height - props.margin.top - props.margin.bottom - scaleY(+d.use_count);
-        }).attr('x', function (d, i) {
-          return scaleX(dateParse(d.date));
-        }).attr('y', function (d) {
-          return scaleY(+d.use_count);
-        }).attr('width', scaleX.bandwidth());
-        bars.exit().transition(transition).attr('height', 0).remove();
-        var bars_dummy = g.appendSelect('g.dummy-container').selectAll('.dummy').data(data, function (d, i) {
-          return d.date;
+
+        data.forEach(function (d, i) {
+          d.use_count = props.population ? d.count / props.population * 100000 : d.count;
+          d.use_count = d.use_count < 0 ? 0 : d.use_count;
+          d.mean = d3.mean(data.slice(i - props.avg_days, i), function (d) {
+            return +d.count;
+          }); // avg calc
+
+          d.use_mean = props.population ? d.mean / props.population * 100000 : d.mean;
+          d.use_mean = d.use_mean < 0 ? 0 : d.use_mean;
         });
-        bars_dummy.enter().append('rect').style('fill', 'white').attr('class', 'dummy').style('opacity', 0).attr('height', function (d) {
-          return props.height;
-        }).attr('x', function (d, i) {
-          return scaleX(dateParse(d.date));
-        }).attr('y', function (d) {
-          return 0;
-        }).attr('width', scaleX.bandwidth()).on('mouseover', showTooltip).on('mouseout', hideTooltip).merge(bars_dummy).transition(transition).attr('height', function (d) {
-          return props.height;
-        }).attr('x', function (d, i) {
-          return scaleX(dateParse(d.date));
-        }).attr('y', function (d) {
-          return 0;
-        }).attr('width', scaleX.bandwidth());
-        bars_dummy.exit().transition(transition).attr('height', 0).remove();
-        bars_dummy.on('mouseover', showTooltip).on('mouseout', hideTooltip);
-      } // avg line
 
+        if (props.date_range.length > 1) {
+          var startDate = dateParse(props.date_range[0]);
+          var endDate = dateParse(props.date_range[1]);
 
-      var avg_line = g.selectAll('.avg-line').data([data]);
-      avg_line.enter().append('path').attr('class', 'avg-line').merge(avg_line).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth); // LABELS
-
-      if (props.labels) {
-        var label_container = g.appendSelect('g.labels'); // avg label
-
-        var avg_label = label_container.appendSelect('g.avg-label').attr('transform', "translate(".concat(scaleX(dateParse(data[14].date)), ",").concat(scaleY(data[14].use_mean) - props.height / 20, ")"));
-        avg_label.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y1', props.height / 20).attr('y2', 0);
-        avg_label.appendSelect('text').attr('dx', -10).attr('dy', -5).text(Mustache.render(props.text.avg, {
-          average: props.avg_days
-        })); // new numbers label
-        // GET MAX
-
-        var max = d3.max(data, function (d) {
-          return d.use_count;
-        });
-        var max_var = data.filter(function (d) {
-          return d.use_count == max;
-        })[0];
-        var new_nos_label = label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(dateParse(max_var.date)), ",").concat(scaleY(max_var.use_count), ")"));
-        new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
-        new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text("".concat(props.text.daily_numbers + props.variable_name));
-      } // tooltip
-
-
-      var tooltipBox = this.selection().appendSelect('div.custom-tooltip');
-      var tt_inner = tooltipBox.appendSelect('div.tooltip-inner');
-
-      function showTooltip(obj) {
-        var tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
-        var formatFunction = props.population ? round : numberFormat_tt;
-        g.select(".bar.d-".concat(obj.date.replace(/-/g, ''))).classed('active', true);
-        var coords = [];
-        coords[0] = scaleX(dateParse(obj.date)) + props.margin.left + scaleX.bandwidth() / 2;
-        coords[1] = scaleY(obj.use_count) + props.margin.top;
-        var q = getTooltipType(coords, [props.height, width]);
-        tooltipBox.classed('tooltip-active', true).classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false).style('left', "".concat(coords[0], "px")).style('top', "".concat(coords[1], "px")).classed("tooltip-".concat(q), true);
-        tt_inner.appendSelect('div.tt-header').text(dateFormat_tt(dateParse(obj.date)));
-        tt_inner.appendSelect('div.tt-row').text(formatFunction(obj.use_count) + props.text.tooltip_suffix + props.variable_name + tooltip_text_add);
-      }
-
-      function hideTooltip() {
-        g.select('.bar.active').classed('active', false);
-        tooltipBox.classed('tooltip-active', false);
-      }
-
-      function getTooltipType(coords, size) {
-        var l = [];
-        var ns_threshold = size[1] < 500 ? 4 : 2;
-
-        if (coords[1] > size[1] / ns_threshold) {
-          l.push('s');
+          if (startDate < endDate && endDate <= d3.max(data, function (d) {
+            return dateParse(d.date);
+          })) {
+            data = data.filter(function (d) {
+              return dateParse(d.date) >= startDate && dateParse(d.date) <= endDate;
+            });
+            dateList = getDates(startDate, endDate);
+          } else {
+            dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
+          }
         } else {
-          l.push('n');
-        }
-
-        if (coords[0] > size[0] / 2) {
-          l.push('e');
-        }
-
-        if (coords[0] < size[0] / 2) {
-          l.push('w');
-        }
-
-        return l.join('');
-      } // Annotations
-      // Reposition if already on the page
+          dateList = getDates(dateParse(data[0].date), dateParse(data[data.length - 1].date));
+        } // x scale
 
 
-      var annotation_check = !!g.selectAll('g.annotations-container').node();
-      props.annotations = props.annotations.filter(function (d) {
-        if (scaleX(dateParse(d.date)) && d.text.length > 1) {
-          return d;
-        }
-      });
+        var scaleX = d3.scaleBand().round(false).range([0, width - props.margin.right - props.margin.left]).domain(dateList).padding(props.padding);
+        var yRange = d3.extent(data, function (d) {
+          return +d.use_count;
+        }); // y scale
 
-      if (props.annotations.length > 0 || annotation_check) {
-        var annotations_container = g.appendSelect('g.annotations-container').selectAll('.annotation').data(props.annotations, function (d, i) {
-          return d.date;
+        var scaleY = d3.scaleLinear().range([props.height - props.margin.bottom - props.margin.top, 0]).domain(yRange); // line
+
+        var line = d3.line().x(function (d) {
+          return scaleX(dateParse(d.date));
+        }).y(function (d) {
+          return scaleY(d.use_mean ? d.use_mean : 0);
         });
-        var annotation = annotations_container.enter().append('g').attr('class', function (d) {
-          return d["class"] ? "annotation ".concat(d["class"]) : 'annotation';
-        }).attr('transform', function (d) {
-          return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
-        });
-        annotations_container.merge(annotations_container).transition(transition).attr('transform', function (d) {
-          return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
-        });
-        annotation.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y2', function (d) {
-          if (scaleX(dateParse(d.date)) > width / 2) {
-            return props.height / 6 * 1.5 - 10;
+
+        if (props.left_y_axis) {
+          var label_container = g.appendSelect('g.labels');
+          var max = d3.max(data, function (d) {
+            return d.use_mean;
+          });
+          var max_var = data.filter(function (d) {
+            return d.use_mean === max;
+          })[0];
+          var new_nos_label = label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(dateParse(max_var.date)), ",").concat(scaleY(max_var.use_mean), ")"));
+          new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
+          new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text(max_var.use_mean);
+        } else {
+          var ticks;
+
+          if (yRange[1] === 2) {
+            ticks = 2;
+          } else if (!props.bars || yRange[1] === 1) {
+            ticks = 1;
           } else {
-            return props.height / 6 * 4 - 10;
+            ticks = 3;
           }
-        }).attr('y1', props.height - props.margin.top - props.margin.bottom);
-        var text_container = annotation.appendSelect('g.text-container').attr('transform', function (d) {
-          if (scaleX(dateParse(d.date)) > width / 2) {
-            return "translate(-8,".concat(props.height / 6 * 1.5, ")");
-          } else {
-            return "translate(8,".concat(props.height / 6 * 4, ")");
-          }
-        }).attr('text-anchor', function (d) {
-          if (scaleX(dateParse(d.date)) > width / 2) {
-            return 'end';
-          } else {
-            return 'start';
+
+          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks));
+          g.select('.axis--y').selectAll('.tick').each(function (d) {
+            if (d === 0) {
+              this.remove();
+            }
+          });
+        }
+
+        if (props.x_axis) {
+          g.appendSelect('g.axis--x').attr('class', 'axis--x axis').transition(transition).attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
+        }
+
+        if (props.bars) {
+          var bars = g.appendSelect('g.bars-container').selectAll('.bar').data(data, function (d, i) {
+            return d.date;
+          }); // for smooth data updation
+
+          bars.enter().append('rect').attr('class', function (d) {
+            return "bar d-".concat(d.date.replace(/-/g, ''));
+          }).style('fill', props.fill).attr('height', function (d) {
+            return scaleY(0) - scaleY(+d.use_count);
+          }).attr('x', function (d, i) {
+            return scaleX(dateParse(d.date));
+          }).attr('y', function (d) {
+            return scaleY(+d.use_count);
+          }).attr('width', scaleX.bandwidth()).merge(bars).transition(transition).attr('height', function (d) {
+            return scaleY(0) - scaleY(+d.use_count);
+          }).attr('x', function (d, i) {
+            return scaleX(dateParse(d.date));
+          }).attr('y', function (d) {
+            return scaleY(+d.use_count);
+          }).attr('width', scaleX.bandwidth());
+          bars.exit().transition(transition).attr('height', 0).remove();
+          var bars_dummy = g.appendSelect('g.dummy-container').selectAll('.dummy').data(data, function (d, i) {
+            return d.date;
+          });
+          bars_dummy.enter().append('rect').style('fill', 'white').attr('class', 'dummy').style('opacity', 0).attr('height', function (d) {
+            return props.height;
+          }).attr('x', function (d, i) {
+            return scaleX(dateParse(d.date));
+          }).attr('y', function (d) {
+            return 0;
+          }).attr('width', scaleX.bandwidth()).on('mouseover', showTooltip).on('mouseout', hideTooltip).merge(bars_dummy).transition(transition).attr('height', function (d) {
+            return props.height;
+          }).attr('x', function (d, i) {
+            return scaleX(dateParse(d.date));
+          }).attr('y', function (d) {
+            return 0;
+          }).attr('width', scaleX.bandwidth());
+          bars_dummy.exit().transition(transition).attr('height', 0).remove();
+          bars_dummy.on('mouseover', showTooltip).on('mouseout', hideTooltip);
+        } // avg line
+
+
+        var avg_line = g.selectAll('.avg-line').data([data]);
+        avg_line.enter().append('path').attr('class', 'avg-line').merge(avg_line).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth); // LABELS
+
+        if (props.labels) {
+          var _label_container = g.appendSelect('g.labels'); // avg label
+
+
+          var avg_label = _label_container.appendSelect('g.avg-label').attr('transform', "translate(".concat(scaleX(dateParse(data[14].date)), ",").concat(scaleY(data[14].use_mean) - props.height / 20, ")"));
+
+          avg_label.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y1', props.height / 20).attr('y2', 0);
+          avg_label.appendSelect('text').attr('dx', -10).attr('dy', -5).text(Mustache.render(props.text.avg, {
+            average: props.avg_days
+          })); // new numbers label
+          // GET MAX
+
+          var _max = d3.max(data, function (d) {
+            return d.use_count;
+          });
+
+          var _max_var = data.filter(function (d) {
+            return d.use_count == _max;
+          })[0];
+
+          var _new_nos_label = _label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(dateParse(_max_var.date)), ",").concat(scaleY(_max_var.use_count), ")"));
+
+          _new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
+
+          _new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text("".concat(props.text.daily_numbers + props.variable_name));
+        } // tooltip
+
+
+        var tooltipBox = this.selection().appendSelect('div.custom-tooltip');
+        var tt_inner = tooltipBox.appendSelect('div.tooltip-inner');
+        var annotation_check = !!g.selectAll('g.annotations-container').node();
+        props.annotations = props.annotations.filter(function (d) {
+          if (scaleX(dateParse(d.date)) && d.text.length > 1) {
+            return d;
           }
         });
-        text_container.appendSelect('text.date').text(function (d) {
-          return dateFormat_tt(dateParse(d.date));
-        });
-        text_container.appendSelect('text.text').attr('dy', 16).text(function (d) {
-          return d.text;
-        });
-        annotations_container.exit().remove();
+
+        if (props.annotations.length > 0 || annotation_check) {
+          var annotations_container = g.appendSelect('g.annotations-container').selectAll('.annotation').data(props.annotations, function (d, i) {
+            return d.date;
+          });
+          var annotation = annotations_container.enter().append('g').attr('class', function (d) {
+            return d["class"] ? "annotation ".concat(d["class"]) : 'annotation';
+          }).attr('transform', function (d) {
+            return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
+          });
+          annotations_container.merge(annotations_container).transition(transition).attr('transform', function (d) {
+            return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
+          });
+          annotation.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y2', function (d) {
+            if (scaleX(dateParse(d.date)) > width / 2) {
+              return props.height / 6 * 1.5 - 10;
+            } else {
+              return props.height / 6 * 4 - 10;
+            }
+          }).attr('y1', props.height - props.margin.top - props.margin.bottom);
+          var text_container = annotation.appendSelect('g.text-container').attr('transform', function (d) {
+            if (scaleX(dateParse(d.date)) > width / 2) {
+              return "translate(-8,".concat(props.height / 6 * 1.5, ")");
+            } else {
+              return "translate(8,".concat(props.height / 6 * 4, ")");
+            }
+          }).attr('text-anchor', function (d) {
+            if (scaleX(dateParse(d.date)) > width / 2) {
+              return 'end';
+            } else {
+              return 'start';
+            }
+          });
+          text_container.appendSelect('text.date').text(function (d) {
+            return dateFormat_tt(dateParse(d.date));
+          });
+          text_container.appendSelect('text.text').attr('dy', 16).text(function (d) {
+            return d.text;
+          });
+          annotations_container.exit().remove();
+        }
+      } else {
+        this.selection().appendSelect('p.no-data').text(props.text.no_data + '' + props.variable_name);
       }
 
       return this;
