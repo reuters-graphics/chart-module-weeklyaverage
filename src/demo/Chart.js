@@ -28,7 +28,6 @@ class ChartComponent extends React.Component {
         // margin:{
         //   left: 0,bottom: 0,top:0
         // }
-        // bars: false,
         // annotations:[
         //     {
         //       'date':'2020-02-12',
