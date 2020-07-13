@@ -1,3 +1,12 @@
+$dark-blue: #2f353f;
+$yellow: #fce587;
+$dark-yellow: #eec331;
+$half-white: rgba(255, 255, 255, 0.75);
+$boxshadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+body{
+  background: $dark-blue;
+}
+
 #{$WeeklyAverage-container} {
   position: relative;
 
@@ -23,12 +32,12 @@
   .axis{
   	text{
   		font-family: $font-family-sans-serif;
-  		fill: #999;
+  		fill: $half-white;
   		font-size: .8rem;
   	}
   	line{
   		stroke-width: .7;
-  		stroke: #999;
+  		stroke: $half-white;
   	}
   }
   
@@ -39,12 +48,12 @@
   position: relative;
   .labels{
   	line{
-  		stroke: #000;
-  		stroke-width: .7;
+  		stroke: white;
   	}
   	text{
-  		text-shadow: 2px 2px 2px #fcfcfc, 2px 2px 2px #eee, 0 -2px 0 #fff, -2px 0 0 #fff;
+      fill: $half-white;
   		font-size: .8rem;
+      text-shadow: 2px 2px 2px $dark-blue, 2px 2px 2px $dark-blue, 0 -2px 0 $dark-blue, -2px 0 0 $dark-blue;
   	}
   	pointer-events: none;
   }

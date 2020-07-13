@@ -20,10 +20,10 @@ class ChartComponent extends React.Component {
       .data(defaultData)
       .props({
         // population: 370000000,
-        // labels: false,
+        // labels: true,
         // x_axis: false,
         // bars: false,
-        // left_y_axis: true,
+        left_y_axis: true,
         // date_range: ['2020-03-01','2020-06-02'], // YYYY-MM-DD format
         // margin:{
         //   left: 0,bottom: 0,top:0
