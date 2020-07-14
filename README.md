@@ -70,18 +70,22 @@ myChart
 	
   text: { // Here we pass all the text lines in the chart
 
-	  daily_numbers: 'Daily new ', 
+	  daily_numbers: 'Daily new {{ variable }}',
 	  // Bar label says daily new cases
 
-	  tooltip_suffix: ' new ', 	   // Tooltip will say XXXXX new cases
+	  tooltip_suffix: '{{ number }} new {{ variable }}', // Tooltip will say XXXXX new cases
 
 	  avg: '{{ average }}-day average', // How many day avg is the line. 
 	  // takes the number automatically from avg_days
 
-	  per_pop_tt_suffix: ' per 100k people in the population', // if normalised by 
-	  // population, tooltip will say XXXXX new cases per 100k people in the population
+	  per_pop_tt: '{{ number }} new {{ variable }} per 100k people in the population', 
+    // if normalised by population, tooltip will say XXXXX
+	  // new cases per 100k people in the population
 
-    subhed: '' // empty by default. Can receive a string for a subhed above the chart
+    subhed: '', // empty by default. Can receive a string for a subhed above the chart
+
+    no_data: 'No reported {{ variable }}' // Chart says no reported cases if 
+    // there are no reported cases for that place
 	},
   )
   .draw();

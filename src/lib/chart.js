@@ -29,12 +29,12 @@ class WeeklyAverage extends ChartComponent {
       left: 20, right: 50, top: 10, bottom: 30
     },
     text: {
-      daily_numbers: 'Daily new ',
-      tooltip_suffix: ' new ',
+      daily_numbers: 'Daily new {{ variable }}',
+      tooltip_suffix: '{{ number }} new {{ variable }}',
       avg: '{{ average }}-day average',
-      per_pop_tt_suffix: ' per 100k people in the population',
+      per_pop_tt: '{{ number }} new {{ variable }} per 100k people in the population',
       subhed: '',
-      no_data: 'No reported '
+      no_data: 'No reported {{ variable }}'
     },
     locale: 'en'
   };
@@ -261,7 +261,7 @@ class WeeklyAverage extends ChartComponent {
             .style('text-anchor', 'end')
             .attr('dx', -13)
             .attr('dy', 12)
-            .text(`${props.text.daily_numbers + props.variable_name}`);
+            .text(Mustache.render(props.text.daily_numbers, { variable: props.variable_name }));
         }
       }
 
@@ -313,7 +313,7 @@ class WeeklyAverage extends ChartComponent {
       const tt_inner = tooltipBox.appendSelect('div.tooltip-inner');
 
       function showTooltip(obj) {
-        const tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
+        const tooltip_text = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
         const formatFunction = props.population ? round : numberFormat_tt;
         g.select(`.bar.d-${dateFormatMatch(obj.date).replace(/-/g, '')}`)
           .classed('active', true);
@@ -335,7 +335,7 @@ class WeeklyAverage extends ChartComponent {
           .text(dateFormat_tt(obj.date));
 
         tt_inner.appendSelect('div.tt-row')
-          .text(formatFunction(obj.use_count) + props.text.tooltip_suffix + props.variable_name + tooltip_text_add);
+          .text(Mustache.render(tooltip_text, { variable: props.variable_name, number: formatFunction(obj.use_count) }));
       }
 
       function hideTooltip() {
@@ -430,7 +430,7 @@ class WeeklyAverage extends ChartComponent {
     } else {
       gOuter
         .appendSelect('p.no-data')
-        .text(props.text.no_data + '' + props.variable_name)
+        .text(Mustache.render(props.text.no_data, { variable: props.variable_name }))
     }
 
     return this;

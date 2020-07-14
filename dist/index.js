@@ -5,6 +5,7 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 var d3 = require('d3');
 var merge = _interopDefault(require('lodash/merge'));
 var Mustache = _interopDefault(require('mustache'));
+var D3Locale = _interopDefault(require('@reuters-graphics/d3-locale'));
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -487,12 +488,6 @@ var ChartComponent = /*#__PURE__*/function () {
 
 // import defaultData from './defaultData.json';
 
-var dateParse = d3.timeParse('%Y-%m-%d');
-var dateFormat = d3.timeFormat('%b %e');
-var dateFormatMatch = d3.timeFormat('%Y-%m-%d');
-var dateFormat_tt = d3.timeFormat('%B %e');
-var numberFormat_tt = d3.format(',');
-
 var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
   _inherits(WeeklyAverage, _ChartComponent);
 
@@ -537,7 +532,8 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         per_pop_tt_suffix: ' per 100k people in the population',
         subhed: '',
         no_data: 'No reported '
-      }
+      },
+      locale: 'en'
     });
 
     _defineProperty(_assertThisInitialized(_this), "defaultData", []);
@@ -551,6 +547,12 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       var data = this.data();
       var props = this.props();
       var node = this.selection().node();
+      var locale = new D3Locale(props.locale);
+      var dateParse = d3.timeParse('%Y-%m-%d');
+      var dateFormat = locale.formatTime('%b %e');
+      var dateFormatMatch = locale.formatTime('%Y-%m-%d');
+      var dateFormat_tt = locale.formatTime('%B %e');
+      var numberFormat_tt = locale.format(',');
       var dateList = [];
       var yRange;
       var allDates = [];
@@ -580,7 +582,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           coords[1] = scaleY(obj.use_count) + props.margin.top;
           var q = getTooltipType(coords, [props.height, width]);
           tooltipBox.classed('tooltip-active', true).classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false).style('left', "".concat(coords[0], "px")).style('top', "".concat(coords[1], "px")).classed("tooltip-".concat(q), true);
-          tt_inner.appendSelect('div.tt-header').text(dateFormat_tt(dateParse(obj.date)));
+          tt_inner.appendSelect('div.tt-header').text(dateFormat_tt(obj.date));
           tt_inner.appendSelect('div.tt-row').text(formatFunction(obj.use_count) + props.text.tooltip_suffix + props.variable_name + tooltip_text_add);
         };
 
@@ -787,7 +789,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             ticks = 3;
           }
 
-          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks));
+          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat_tt));
           g.select('.axis--y').selectAll('.tick').each(function (d) {
             if (d === 0) {
               this.remove();
