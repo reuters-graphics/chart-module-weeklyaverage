@@ -526,12 +526,12 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         bottom: 30
       },
       text: {
-        daily_numbers: 'Daily new ',
-        tooltip_suffix: ' new ',
+        daily_numbers: 'Daily new {{ variable }}',
+        tooltip_suffix: '{{ number }} new {{ variable }}',
         avg: '{{ average }}-day average',
-        per_pop_tt_suffix: ' per 100k people in the population',
+        per_pop_tt: '{{ number }} new {{ variable }} per 100k people in the population',
         subhed: '',
-        no_data: 'No reported '
+        no_data: 'No reported {{ variable }}'
       },
       locale: 'en'
     });
@@ -574,7 +574,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         return d.count;
       }) > 0) {
         var showTooltip = function showTooltip(obj) {
-          var tooltip_text_add = props.population ? props.text.per_pop_tt_suffix : '';
+          var tooltip_text = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
           var formatFunction = props.population ? round : numberFormat_tt;
           g.select(".bar.d-".concat(dateFormatMatch(obj.date).replace(/-/g, ''))).classed('active', true);
           var coords = [];
@@ -583,7 +583,10 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           var q = getTooltipType(coords, [props.height, width]);
           tooltipBox.classed('tooltip-active', true).classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false).style('left', "".concat(coords[0], "px")).style('top', "".concat(coords[1], "px")).classed("tooltip-".concat(q), true);
           tt_inner.appendSelect('div.tt-header').text(dateFormat_tt(obj.date));
-          tt_inner.appendSelect('div.tt-row').text(formatFunction(obj.use_count) + props.text.tooltip_suffix + props.variable_name + tooltip_text_add);
+          tt_inner.appendSelect('div.tt-row').text(Mustache.render(tooltip_text, {
+            variable: props.variable_name,
+            number: formatFunction(obj.use_count)
+          }));
         };
 
         var hideTooltip = function hideTooltip() {
@@ -757,7 +760,9 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             })[0];
             var new_nos_label = label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(max_var.date), ",").concat(scaleY(max_var.use_count), ")"));
             new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
-            new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text("".concat(props.text.daily_numbers + props.variable_name));
+            new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text(Mustache.render(props.text.daily_numbers, {
+              variable: props.variable_name
+            }));
           }
         }
 
@@ -848,7 +853,9 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           annotations_container.exit().remove();
         }
       } else {
-        gOuter.appendSelect('p.no-data').text(props.text.no_data + '' + props.variable_name);
+        gOuter.appendSelect('p.no-data').text(Mustache.render(props.text.no_data, {
+          variable: props.variable_name
+        }));
       }
 
       return this;
