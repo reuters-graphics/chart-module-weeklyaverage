@@ -33,8 +33,11 @@
     "sass": "^1.26.8"
   },
   "dependencies": {
+    "@reuters-graphics/d3-locale": "^0.0.2",
     "@reuters-graphics/graphics-atlas-client": "^0.0.5",
     "d3": "^5.16.0",
+    "d3-format": "^1.4.4",
+    "d3-time-format": "^2.2.3",
     "lodash": "^4.17.15",
     "mustache": "^4.0.1",
     "underscore": "^1.10.2"

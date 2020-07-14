@@ -1055,6 +1055,11 @@
   resolved "https://registry.yarnpkg.com/@next/react-refresh-utils/-/react-refresh-utils-9.4.4.tgz#d94cbb3b354a07f1f5b80e554d6b9e34aba99e41"
   integrity sha512-9nKENeWRI6kQk44TbeqleIVtNLfcS3klVUepzl/ZCqzR5Bi06uqBCD277hdVvG/wL1pxA+R/pgJQLqnF5E2wPQ==
 
+"@reuters-graphics/d3-locale@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@reuters-graphics/d3-locale/-/d3-locale-0.0.2.tgz#23bf69bdd402f52097ff9e3649ceba24148fce65"
+  integrity sha512-u2PK1Yr0LBMWexzboTO0w/WDVhBrUhcw17H3bnwB80ULLBw2f3Sq+J7miJ3B5V4BxZ4UP01hOEpPhiGYV93mqA==
+
 "@reuters-graphics/eslint-config@^0.0.2":
   version "0.0.2"
   resolved "https://registry.yarnpkg.com/@reuters-graphics/eslint-config/-/eslint-config-0.0.2.tgz#0d5b870decc75aa4fc5f5bbd58e0de67daa6ca32"
@@ -2535,7 +2540,7 @@ d3-force@1:
     d3-quadtree "1"
     d3-timer "1"
 
-d3-format@1:
+d3-format@1, d3-format@^1.4.4:
   version "1.4.4"
   resolved "https://registry.yarnpkg.com/d3-format/-/d3-format-1.4.4.tgz#356925f28d0fd7c7983bfad593726fce46844030"
   integrity sha512-TWks25e7t8/cqctxCmxpUuzZN11QxIA7YrMbram94zMQ0PXjE4LVIMe/f6a4+xxL8HQ3OsAFULOINQi1pE62Aw==
@@ -2611,7 +2616,7 @@ d3-shape@1:
   dependencies:
     d3-path "1"
 
-d3-time-format@2:
+d3-time-format@2, d3-time-format@^2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/d3-time-format/-/d3-time-format-2.2.3.tgz#0c9a12ee28342b2037e5ea1cf0b9eb4dd75f29cb"
   integrity sha512-RAHNnD8+XvC4Zc4d2A56Uw0yJoM7bsvOlJR33bclxq399Rak/b9bhvu/InjxdWhPtkgU53JJcleJTGkNRnN6IA==

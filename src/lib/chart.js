@@ -3,15 +3,11 @@ import { getDates, round } from './utils/utils';
 import ChartComponent from './base/ChartComponent';
 import Mustache from 'mustache';
 import d3 from './utils/d3';
+import D3Locale from '@reuters-graphics/d3-locale';
+
 // import {round} from 'lodash'
 
 // import defaultData from './defaultData.json';
-
-const dateParse = d3.timeParse('%Y-%m-%d');
-const dateFormat = d3.timeFormat('%b %e');
-const dateFormatMatch = d3.timeFormat('%Y-%m-%d');
-const dateFormat_tt = d3.timeFormat('%B %e');
-const numberFormat_tt = d3.format(',');
 
 class WeeklyAverage extends ChartComponent {
   defaultProps = {
@@ -40,6 +36,7 @@ class WeeklyAverage extends ChartComponent {
       subhed: '',
       no_data: 'No reported '
     },
+    locale: 'en'
   };
 
   defaultData = [];
@@ -48,6 +45,13 @@ class WeeklyAverage extends ChartComponent {
     let data = this.data();
     const props = this.props();
     const node = this.selection().node();
+    const locale = new D3Locale(props.locale);
+    const dateParse = d3.timeParse('%Y-%m-%d');
+    const dateFormat = locale.formatTime('%b %e');
+    const dateFormatMatch = locale.formatTime('%Y-%m-%d');
+    const dateFormat_tt = locale.formatTime('%B %e');
+    const numberFormat_tt = locale.format(',');
+
     let dateList = [];
     let yRange;
     let allDates = [];
@@ -294,7 +298,7 @@ class WeeklyAverage extends ChartComponent {
           .attr('class', 'axis--y axis')
           .transition(transition)
           .attr('transform', `translate(${width - props.margin.right - props.margin.left},0)`)
-          .call(d3.axisRight(scaleY).ticks(ticks));
+          .call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat_tt));
 
         g.select('.axis--y').selectAll('.tick').each(function(d) {
           if (d === 0) {
@@ -328,7 +332,7 @@ class WeeklyAverage extends ChartComponent {
           .classed(`tooltip-${q}`, true);
 
         tt_inner.appendSelect('div.tt-header')
-          .text(dateFormat_tt(dateParse(obj.date)));
+          .text(dateFormat_tt(obj.date));
 
         tt_inner.appendSelect('div.tt-row')
           .text(formatFunction(obj.use_count) + props.text.tooltip_suffix + props.variable_name + tooltip_text_add);

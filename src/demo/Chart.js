@@ -21,15 +21,16 @@ class ChartComponent extends React.Component {
       .props({
         // population: 370000000,
         labels: true,
-        x_axis: false,
-        bars: false,
-        left_y_axis: true,
+        // x_axis: false,
+        // bars: false,
+        // left_y_axis: true,
         // date_range: ['2020-03-01','2020-06-02'], // YYYY-MM-DD format
         // margin:{
         //   left: 0,bottom: 0,top:0
         // }
+        // locale: 'es',
         text: {
-          subhed: '7-day average'
+          // subhed: '7-day average'
         },
         // annotations:[
         //     {
