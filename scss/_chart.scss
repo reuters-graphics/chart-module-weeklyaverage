@@ -53,6 +53,7 @@ body{
       fill: $half-white;
   		font-size: .8rem;
       text-shadow: 2px 2px 2px $dark-blue, 2px 2px 2px $dark-blue, 0 -2px 0 $dark-blue, -2px 0 0 $dark-blue;
+      font-family: $font-family-sans-serif;
   	}
   	pointer-events: none;
   }
