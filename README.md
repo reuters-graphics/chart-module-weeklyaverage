@@ -24,70 +24,77 @@ myChart
   	{"date":"2020-07-05","count":10000},
   	{"date":"2020-07-06","count":10000}
   ])
-  .props(
-	stroke: 'steelblue', // colour of line
-	strokeWidth: 2.5, // width of the line
-	fill: '#eee', // colour of the bars
-	height: 200, // chart height
-	avg_days: 7, // avg line should be an how many day rolling avg
-	annotations: [ 
+  .props({
+	  locale: 'en', // English by default. Used to format text, dates and nos.
 
-	// array of annotations you want on the 
-	// chart in the format below. Class hide-mobile and hide-desktop 
-	// can be used for platform specific annotations
+    stroke: 'steelblue', // colour of line
+  	
+    strokeWidth: 2.5, // width of the line
+  	
+    fill: '#eee', // colour of the bars
+  	
+    height: 200, // chart height
 
-        //	{
-        //       'date':'2020-02-12',
-        //       'text':'Hubei revises methodology',
-        //       'class':'hide-mobile'
-        //   }
-	], 
-	population: false, // If you want the numbers to be normalised 
-                       // by population, pass a number here. It is false by default.
+  	avg_days: 7, // avg line should be an how many day rolling avg
+  	
+    annotations: [ 
 
-	bars: true, // True by default. 
-				// If you want just the line, set value to true
+  	// array of annotations you want on the 
+  	// chart in the format below. Class hide-mobile and hide-desktop 
+  	// can be used for platform specific annotations
 
-	padding: 0, // to set padding between the bars. 
-                // value should be between 0 to 1
+          //	{
+          //       'date':'2020-02-12',
+          //       'text':'Hubei revises methodology',
+          //       'class':'hide-mobile'
+          //   }
+  	], 
+  	population: false, // If you want the numbers to be normalised 
+                         // by population, pass a number here. It is false by default.
 
-	labels: false, // Setting this to true will show a label
-                   // to explain what the bars and line are
+  	bars: true, // True by default. 
+  				// If you want just the line, set value to true
 
-  left_y_axis: false, // Set false by default, setting to true will have
-                      // only the max value displayed on the left
+  	padding: 0, // to set padding between the bars. 
+                  // value should be between 0 to 1
 
-  x_axis: true, // Set true by default, setting to false will hide the x-axis.
+  	labels: false, // Setting this to true will show a label
+                     // to explain what the bars and line are
 
-  date_range: ['2020-03-01','2020-07-02'], // Pass two dates in a YYYY-MM-DD 
-                                // format to filter the data based on that.
-                                // Leaving it empty will put all the data on the chart
-  margin: {
-      left: 20, right: 50, top: 10, bottom: 30
-    }, // Pass only the variables that you want to overwrite
+    left_y_axis: false, // Set false by default, setting to true will have
+                        // only the max value displayed on the left
 
-	variable_name: 'cases', // What is this a chart of? Infections? Deaths? Tests?
-	
-  text: { // Here we pass all the text lines in the chart
+    x_axis: true, // Set true by default, setting to false will hide the x-axis.
 
-	  daily_numbers: 'Daily new {{ variable }}',
-	  // Bar label says daily new cases
+    date_range: ['2020-03-01','2020-07-02'], // Pass two dates in a YYYY-MM-DD 
+                                  // format to filter the data based on that.
+                                  // Leaving it empty will put all the data on the chart
+    margin: {
+        left: 20, right: 50, top: 10, bottom: 30
+      }, // Pass only the variables that you want to overwrite
 
-	  tooltip_suffix: '{{ number }} new {{ variable }}', // Tooltip will say XXXXX new cases
+  	variable_name: 'cases', // What is this a chart of? Infections? Deaths? Tests?
+  	
+    text: { // Here we pass all the text lines in the chart
 
-	  avg: '{{ average }}-day average', // How many day avg is the line. 
-	  // takes the number automatically from avg_days
+  	  daily_numbers: 'Daily new {{ variable }}',
+  	  // Bar label says daily new cases
 
-	  per_pop_tt: '{{ number }} new {{ variable }} per 100k people in the population', 
-    // if normalised by population, tooltip will say XXXXX
-	  // new cases per 100k people in the population
+  	  tooltip_suffix: '{{ number }} new {{ variable }}', // Tooltip will say XXXXX new cases
 
-    subhed: '', // empty by default. Can receive a string for a subhed above the chart
+  	  avg: '{{ average }}-day average', // How many day avg is the line. 
+  	  // takes the number automatically from avg_days
 
-    no_data: 'No reported {{ variable }}' // Chart says no reported cases if 
-    // there are no reported cases for that place
-	},
-  )
+  	  per_pop_tt: '{{ number }} new {{ variable }} per 100k people in the population', 
+      // if normalised by population, tooltip will say XXXXX
+  	  // new cases per 100k people in the population
+
+      subhed: '', // empty by default. Can receive a string for a subhed above the chart
+
+      no_data: 'No reported {{ variable }}' // Chart says no reported cases if 
+      // there are no reported cases for that place
+  	},
+  })
   .draw();
 
 // You can call any method again to update the chart.
