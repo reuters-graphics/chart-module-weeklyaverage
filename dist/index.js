@@ -617,7 +617,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         // Reposition if already on the page
 
 
-        gOuter.select('.no-data').remove();
+        this.selection().select('.no-data').remove();
 
         if (props.date_range.length > 1) {
           var startDate = dateParse(props.date_range[0]);

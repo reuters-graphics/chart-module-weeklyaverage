@@ -75,7 +75,7 @@ class WeeklyAverage extends ChartComponent {
       .attr('transform', `translate(${props.margin.left}, ${props.margin.top})`);
 
     if (d3.sum(data, d => d.count) > 0) {
-      gOuter.select('.no-data').remove();
+      this.selection().select('.no-data').remove();
 
       if (props.date_range.length > 1) {
         const startDate = dateParse(props.date_range[0]);
