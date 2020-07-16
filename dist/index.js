@@ -551,8 +551,8 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       var dateParse = d3.timeParse('%Y-%m-%d');
       var dateFormat = locale.formatTime('%b %e');
       var dateFormatMatch = locale.formatTime('%Y-%m-%d');
-      var dateFormat_tt = locale.formatTime('%B %e');
-      var numberFormat_tt = locale.format(',');
+      var dateFormatTT = locale.formatTime('%B %e');
+      var numberFormatTT = locale.format(',');
       var dateList = [];
       var yRange;
       var allDates = [];
@@ -568,22 +568,22 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
 
       var gOuter = this.selection().appendSelect('svg') // see docs in ./utils/d3.js
       .attr('width', width).attr('height', props.height);
-      var g = gOuter.appendSelect('g').attr('transform', "translate(".concat(props.margin.left, ", ").concat(props.margin.top, ")"));
+      var g = gOuter.appendSelect('g.container').attr('transform', "translate(".concat(props.margin.left, ", ").concat(props.margin.top, ")"));
 
       if (d3.sum(data, function (d) {
         return d.count;
       }) > 0) {
         var showTooltip = function showTooltip(obj) {
-          var tooltip_text = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
-          var formatFunction = props.population ? round : numberFormat_tt;
+          var TooltipText = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
+          var formatFunction = props.population ? round : numberFormatTT;
           g.select(".bar.d-".concat(dateFormatMatch(obj.date).replace(/-/g, ''))).classed('active', true);
           var coords = [];
           coords[0] = scaleX(obj.date) + props.margin.left + scaleX.bandwidth() / 2;
           coords[1] = scaleY(obj.use_count) + props.margin.top;
           var q = getTooltipType(coords, [props.height, width]);
           tooltipBox.classed('tooltip-active', true).classed('tooltip-ne tooltip-s tooltip-n tooltip-sw tooltip-nw tooltip-se', false).style('left', "".concat(coords[0], "px")).style('top', "".concat(coords[1], "px")).classed("tooltip-".concat(q), true);
-          tt_inner.appendSelect('div.tt-header').text(dateFormat_tt(obj.date));
-          tt_inner.appendSelect('div.tt-row').text(Mustache.render(tooltip_text, {
+          ttInner.appendSelect('div.tt-header').text(dateFormatTT(obj.date));
+          ttInner.appendSelect('div.tt-row').text(Mustache.render(TooltipText, {
             variable: props.variable_name,
             number: formatFunction(obj.use_count)
           }));
@@ -710,43 +710,44 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             return scaleY(+d.use_count);
           }).attr('width', scaleX.bandwidth());
           bars.exit().transition(transition).attr('height', 0).remove();
-          var bars_dummy = g.appendSelect('g.dummy-container').selectAll('.dummy').data(allDates, function (d, i) {
+          var barsDummy = g.appendSelect('g.dummy-container').selectAll('.dummy').data(allDates, function (d, i) {
             return d.date;
           });
-          bars_dummy.enter().append('rect').style('fill', 'white').attr('class', 'dummy').style('opacity', 0).attr('height', function (d) {
+          barsDummy.enter().append('rect').style('fill', 'white').attr('class', 'dummy').style('opacity', 0).attr('height', function (d) {
             return props.height;
           }).attr('x', function (d, i) {
             return scaleX(d.date);
           }).attr('y', function (d) {
             return 0;
-          }).attr('width', scaleX.bandwidth()).on('mouseover', showTooltip).on('mouseout', hideTooltip).merge(bars_dummy).transition(transition).attr('height', function (d) {
+          }).attr('width', scaleX.bandwidth()).on('mouseover', showTooltip).on('mouseout', hideTooltip).merge(barsDummy).transition(transition).attr('height', function (d) {
             return props.height;
           }).attr('x', function (d, i) {
             return scaleX(d.date);
           }).attr('y', function (d) {
             return 0;
           }).attr('width', scaleX.bandwidth());
-          bars_dummy.exit().transition(transition).attr('height', 0).remove();
-          bars_dummy.on('mouseover', showTooltip).on('mouseout', hideTooltip);
+          barsDummy.exit().transition(transition).attr('height', 0).remove();
+          barsDummy.on('mouseover', showTooltip).on('mouseout', hideTooltip);
         } // avg line
 
 
-        var avg_line = g.selectAll('.avg-line').data([allDates]);
-        avg_line.enter().append('path').attr('class', 'avg-line').merge(avg_line).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth); // LABELS
+        var avgLine = g.selectAll('.avg-line').data([allDates]);
+        avgLine.enter().append('path').attr('class', 'avg-line').merge(avgLine).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth); // LABELS
 
         if (props.labels) {
-          var label_container = g.appendSelect('g.labels');
+          var labelContainer = g.appendSelect('g.labels');
           var useDay = 30;
+          var anchor = 'middle';
           var labelX = scaleX(allDates[useDay].date);
 
-          if (labelX < (width - props.margin.left - props.margin.right) * .18) {
-            useDay = allDates.length - 30;
+          if (labelX < (width - props.margin.left - props.margin.right) * 0.18) {
+            anchor = 'start';
           } // avg label
 
 
-          var avg_label = label_container.appendSelect('g.avg-label').attr('transform', "translate(".concat(scaleX(allDates[useDay].date), ",").concat(scaleY(allDates[useDay].use_mean) - props.height / 20, ")"));
-          avg_label.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y1', props.height / 20).attr('y2', 0);
-          avg_label.appendSelect('text').attr('dx', -10).attr('dy', -5).style('text-anchor', 'middle').text(Mustache.render(props.text.avg, {
+          var avgLabel = labelContainer.appendSelect('g.avg-label').attr('transform', "translate(".concat(scaleX(allDates[useDay].date), ",").concat(scaleY(allDates[useDay].use_mean) - props.height / 20, ")"));
+          avgLabel.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y1', props.height / 20).attr('y2', 0);
+          avgLabel.appendSelect('text').attr('dx', -10).attr('dy', -5).style('text-anchor', anchor).text(Mustache.render(props.text.avg, {
             average: props.avg_days
           })); // new numbers label
           // GET MAX
@@ -755,34 +756,34 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             var max = d3.max(allDates, function (d) {
               return d.use_count;
             });
-            var max_var = allDates.filter(function (d) {
+            var maxVar = allDates.filter(function (d) {
               return d.use_count == max;
             })[0];
-            var new_nos_label = label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(max_var.date), ",").concat(scaleY(max_var.use_count), ")"));
-            new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
-            new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text(Mustache.render(props.text.daily_numbers, {
+            var newNosLabel = labelContainer.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(maxVar.date), ",").concat(scaleY(maxVar.use_count), ")"));
+            newNosLabel.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
+            newNosLabel.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text(Mustache.render(props.text.daily_numbers, {
               variable: props.variable_name
             }));
           }
         }
 
         if (props.left_y_axis) {
-          var _label_container = g.appendSelect('g.labels');
+          var _labelContainer = g.appendSelect('g.labels');
 
           var _max = d3.max(allDates, function (d) {
             return d.use_mean;
           });
 
-          var _max_var = allDates.filter(function (d) {
+          var _maxVar = allDates.filter(function (d) {
             return d.use_mean === _max;
           })[0];
-          var max_plot_val = round(_max_var.use_mean, 0);
+          var maxPlotVal = round(_maxVar.use_mean, 0);
 
-          var _new_nos_label = _label_container.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(_max_var.date), ",").concat(scaleY(max_plot_val), ")"));
+          var _newNosLabel = _labelContainer.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(_maxVar.date), ",").concat(scaleY(maxPlotVal), ")"));
 
-          _new_nos_label.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 0).attr('y2', 0);
+          _newNosLabel.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 0).attr('y2', 0);
 
-          _new_nos_label.appendSelect('text').style('text-anchor', 'end').attr('dx', -10).attr('dy', 4).text(numberFormat_tt(max_plot_val));
+          _newNosLabel.appendSelect('text').style('text-anchor', 'end').attr('dx', -10).attr('dy', 4).text(numberFormatTT(maxPlotVal));
         } else {
           var ticks;
 
@@ -794,7 +795,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             ticks = 3;
           }
 
-          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat_tt));
+          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormatTT));
           g.select('.axis--y').selectAll('.tick').each(function (d) {
             if (d === 0) {
               this.remove();
@@ -804,24 +805,24 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
 
 
         var tooltipBox = this.selection().appendSelect('div.custom-tooltip');
-        var tt_inner = tooltipBox.appendSelect('div.tooltip-inner');
-        var annotation_check = !!g.selectAll('g.annotations-container').node();
+        var ttInner = tooltipBox.appendSelect('div.tooltip-inner');
+        var annotationCheck = !!g.selectAll('g.annotations-container').node();
         props.annotations = props.annotations.filter(function (d) {
           if (scaleX(dateParse(d.date)) && d.text.length > 1) {
             return d;
           }
         });
 
-        if (props.annotations.length > 0 || annotation_check) {
-          var annotations_container = g.appendSelect('g.annotations-container').selectAll('.annotation').data(props.annotations, function (d, i) {
+        if (props.annotations.length > 0 || annotationCheck) {
+          var annotationsContainer = g.appendSelect('g.annotations-container').selectAll('.annotation').data(props.annotations, function (d, i) {
             return d.date;
           });
-          var annotation = annotations_container.enter().append('g').attr('class', function (d) {
+          var annotation = annotationsContainer.enter().append('g').attr('class', function (d) {
             return d["class"] ? "annotation ".concat(d["class"]) : 'annotation';
           }).attr('transform', function (d) {
             return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
           });
-          annotations_container.merge(annotations_container).transition(transition).attr('transform', function (d) {
+          annotationsContainer.merge(annotationsContainer).transition(transition).attr('transform', function (d) {
             return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
           });
           annotation.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y2', function (d) {
@@ -831,7 +832,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
               return props.height / 6 * 4 - 10;
             }
           }).attr('y1', props.height - props.margin.top - props.margin.bottom);
-          var text_container = annotation.appendSelect('g.text-container').attr('transform', function (d) {
+          var textContainer = annotation.appendSelect('g.text-container').attr('transform', function (d) {
             if (scaleX(dateParse(d.date)) > width / 2) {
               return "translate(-8,".concat(props.height / 6 * 1.5, ")");
             } else {
@@ -844,16 +845,17 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
               return 'start';
             }
           });
-          text_container.appendSelect('text.date').text(function (d) {
-            return dateFormat_tt(dateParse(d.date));
+          textContainer.appendSelect('text.date').text(function (d) {
+            return dateFormatTT(dateParse(d.date));
           });
-          text_container.appendSelect('text.text').attr('dy', 16).text(function (d) {
+          textContainer.appendSelect('text.text').attr('dy', 16).text(function (d) {
             return d.text;
           });
-          annotations_container.exit().remove();
+          annotationsContainer.exit().remove();
         }
       } else {
-        gOuter.appendSelect('p.no-data').text(Mustache.render(props.text.no_data, {
+        gOuter.select('.container').remove();
+        this.selection().appendSelect('p.no-data').text(Mustache.render(props.text.no_data, {
           variable: props.variable_name
         }));
       }
