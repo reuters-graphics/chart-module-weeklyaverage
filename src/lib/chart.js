@@ -139,6 +139,12 @@ class WeeklyAverage extends ChartComponent {
         .y(d => scaleY(d.use_mean ? d.use_mean : 0))
         .curve(d3.curveMonotoneX);
 
+      const area = d3.area()
+        .x(d => scaleX(d.date))
+        .y1(d => scaleY(+d.use_count))
+        .y0(scaleY(0))
+        .curve(d3.curveStep);
+
       if (props.x_axis) {
         g.appendSelect('g.axis--x')
           .attr('class', 'axis--x axis')
@@ -149,27 +155,24 @@ class WeeklyAverage extends ChartComponent {
 
       if (props.bars) {
         const bars = g.appendSelect('g.bars-container')
-          .selectAll('.bar')
-          .data(allDates, (d, i) => d.date); // for smooth data updation
+          .selectAll('.area')
+          .data([allDates]);
 
-        bars.enter().append('rect')
-          .attr('class', d => `bar d-${dateFormatMatch(d.date).replace(/-/g, '')}`)
-          .style('fill', props.fill)
-          .attr('height', d => scaleY(0) - scaleY(+d.use_count))
-          .attr('x', (d, i) => scaleX(d.date))
-          .attr('y', d => scaleY(+d.use_count))
-          .attr('width', scaleX.bandwidth())
+        bars
+          .enter()
+          .append('path')
+          .attr('transform',`translate(${scaleX.bandwidth()/2},0)`)
+          .attr('class', 'area')
           .merge(bars)
           .transition(transition)
-          .attr('height', d => scaleY(0) - scaleY(+d.use_count))
-          .attr('x', (d, i) => scaleX(d.date))
-          .attr('y', d => scaleY(+d.use_count))
-          .attr('width', scaleX.bandwidth());
+          .style('fill', props.fill)
+          .attr('d', area);
 
         bars.exit()
           .transition(transition)
-          .attr('height', 0)
           .remove();
+
+        g.appendSelect('rect.highlight-bar');
 
         const barsDummy = g.appendSelect('g.dummy-container')
           .selectAll('.dummy')
@@ -316,7 +319,9 @@ class WeeklyAverage extends ChartComponent {
       function showTooltip(obj) {
         const TooltipText = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
         const formatFunction = props.population ? round : numberFormatTT;
-        g.select(`.bar.d-${dateFormatMatch(obj.date).replace(/-/g, '')}`)
+        d3.select(this)
+          .attr('height', d => scaleY(0) - scaleY(+d.use_count))
+          .attr('y', d => scaleY(+d.use_count))
           .classed('active', true);
 
         const coords = [];
@@ -340,7 +345,9 @@ class WeeklyAverage extends ChartComponent {
       }
 
       function hideTooltip() {
-        g.select('.bar.active')
+        g.select('.active')
+          .attr('height', d => props.height)
+          .attr('y', d => 0)
           .classed('active', false);
         tooltipBox.classed('tooltip-active', false);
       }

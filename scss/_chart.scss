@@ -40,8 +40,9 @@ body{
   	}
   }
   
-  .bar.active{
-  	fill: #ddd!important
+  .active{
+  	fill: #ddd!important;
+    opacity: 1!important;
   }
 
   position: relative;

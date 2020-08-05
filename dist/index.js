@@ -576,7 +576,11 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         var showTooltip = function showTooltip(obj) {
           var TooltipText = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
           var formatFunction = props.population ? round : numberFormatTT;
-          g.select(".bar.d-".concat(dateFormatMatch(obj.date).replace(/-/g, ''))).classed('active', true);
+          d3.select(this).attr('height', function (d) {
+            return scaleY(0) - scaleY(+d.use_count);
+          }).attr('y', function (d) {
+            return scaleY(+d.use_count);
+          }).classed('active', true);
           var coords = [];
           coords[0] = scaleX(obj.date) + props.margin.left + scaleX.bandwidth() / 2;
           coords[1] = scaleY(obj.use_count) + props.margin.top;
@@ -590,7 +594,11 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         };
 
         var hideTooltip = function hideTooltip() {
-          g.select('.bar.active').classed('active', false);
+          g.select('.active').attr('height', function (d) {
+            return props.height;
+          }).attr('y', function (d) {
+            return 0;
+          }).classed('active', false);
           tooltipBox.classed('tooltip-active', false);
         };
 
@@ -684,32 +692,21 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         }).y(function (d) {
           return scaleY(d.use_mean ? d.use_mean : 0);
         }).curve(d3.curveMonotoneX);
+        var area = d3.area().x(function (d) {
+          return scaleX(d.date);
+        }).y1(function (d) {
+          return scaleY(+d.use_count);
+        }).y0(scaleY(0)).curve(d3.curveStep);
 
         if (props.x_axis) {
           g.appendSelect('g.axis--x').attr('class', 'axis--x axis').transition(transition).attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
         }
 
         if (props.bars) {
-          var bars = g.appendSelect('g.bars-container').selectAll('.bar').data(allDates, function (d, i) {
-            return d.date;
-          }); // for smooth data updation
-
-          bars.enter().append('rect').attr('class', function (d) {
-            return "bar d-".concat(dateFormatMatch(d.date).replace(/-/g, ''));
-          }).style('fill', props.fill).attr('height', function (d) {
-            return scaleY(0) - scaleY(+d.use_count);
-          }).attr('x', function (d, i) {
-            return scaleX(d.date);
-          }).attr('y', function (d) {
-            return scaleY(+d.use_count);
-          }).attr('width', scaleX.bandwidth()).merge(bars).transition(transition).attr('height', function (d) {
-            return scaleY(0) - scaleY(+d.use_count);
-          }).attr('x', function (d, i) {
-            return scaleX(d.date);
-          }).attr('y', function (d) {
-            return scaleY(+d.use_count);
-          }).attr('width', scaleX.bandwidth());
-          bars.exit().transition(transition).attr('height', 0).remove();
+          var bars = g.appendSelect('g.bars-container').selectAll('.area').data([allDates]);
+          bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').merge(bars).transition(transition).style('fill', props.fill).attr('d', area);
+          bars.exit().transition(transition).remove();
+          g.appendSelect('rect.highlight-bar');
           var barsDummy = g.appendSelect('g.dummy-container').selectAll('.dummy').data(allDates, function (d, i) {
             return d.date;
           });
