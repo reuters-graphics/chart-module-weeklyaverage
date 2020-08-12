@@ -138,6 +138,10 @@ class WeeklyAverage extends ChartComponent {
         .domain(dateList)
         .padding(props.padding);
 
+      const scaleXHover = d3.scaleLinear()
+        .range([0, width - props.margin.right - props.margin.left])
+        .domain([dateList[0], dateList[dateList.length - 1]]);
+
       if (props.bars) {
         yRange = d3.extent(allDates, d => +d.use_count);
       } else {
@@ -190,34 +194,15 @@ class WeeklyAverage extends ChartComponent {
 
         g.appendSelect('rect.highlight-bar');
 
-        const barsDummy = g.appendSelect('g.dummy-container')
-          .selectAll('.dummy')
-          .data(allDates, (d, i) => d.date);
-
-        barsDummy.enter()
+        g.appendSelect('g.dummy-container')
           .append('rect')
-          .style('fill', 'white')
-          .attr('class', 'dummy')
-          .style('opacity', 0)
-          .attr('height', d => props.height)
-          .attr('x', (d, i) => scaleX(d.date))
-          .attr('y', d => 0)
-          .attr('width', scaleX.bandwidth())
-          .on('mouseover', showTooltip)
-          .on('mouseout', hideTooltip)
-          .merge(barsDummy)
-          .transition(transition)
-          .attr('height', d => props.height)
-          .attr('x', (d, i) => scaleX(d.date))
-          .attr('y', d => 0)
-          .attr('width', scaleX.bandwidth());
-
-        barsDummy.exit()
-          .transition(transition)
-          .attr('height', 0)
-          .remove();
-
-        barsDummy.on('mouseover', showTooltip)
+          .attr('height', props.height - props.margin.top - props.margin.bottom)
+          .attr('width', width - props.margin.left - props.margin.right+2)
+          .style('opacity',0)
+          .on('mousemove', function(d) {
+            const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0]))))
+            showTooltip(highlightDate);
+          })
           .on('mouseout', hideTooltip);
       }
 
@@ -233,6 +218,7 @@ class WeeklyAverage extends ChartComponent {
         .attr('d', line)
         .attr('fill', 'none')
         .attr('stroke', props.stroke)
+        .style('pointer-events','none')
         .attr('stroke-width', props.strokeWidth);
 
       // LABELS
@@ -332,12 +318,16 @@ class WeeklyAverage extends ChartComponent {
 
       const ttInner = tooltipBox.appendSelect('div.tooltip-inner');
 
-      function showTooltip(obj) {
+      function showTooltip(date) {
         const TooltipText = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
         const formatFunction = props.population ? round : numberFormatTT;
-        d3.select(this)
-          .attr('height', d => scaleY(0) - scaleY(+d.use_count))
-          .attr('y', d => scaleY(+d.use_count))
+        const obj = allDates.filter(d => dateFormatMatch(d.date) === date)[0];
+        g.select('.highlight-bar')
+          .attr('x', scaleX(obj.date))
+          .attr('width', scaleX.bandwidth())
+          .attr('height', d => scaleY(0) - scaleY(obj.use_count))
+          .attr('y', d => scaleY(obj.use_count))
+          .style('opacity',1)
           .classed('active', true);
 
         const coords = [];
@@ -361,9 +351,10 @@ class WeeklyAverage extends ChartComponent {
       }
 
       function hideTooltip() {
-        g.select('.active')
+        g.select('.highlight-bar')
           .attr('height', d => props.height)
           .attr('y', d => 0)
+          .style('opacity',0)
           .classed('active', false);
         tooltipBox.classed('tooltip-active', false);
       }
