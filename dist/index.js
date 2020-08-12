@@ -533,7 +533,17 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         subhed: '',
         no_data: 'No reported {{ variable }}'
       },
-      locale: 'en'
+      locale: 'en',
+      chart_formats: {
+        // Format number for axis
+        number: ',',
+        // Format number for tooltip
+        number_tooltip: ',',
+        // Date on tooltip
+        date_tooltip: '%B %e',
+        // Date format for the x axis
+        date: '%b %e'
+      }
     });
 
     _defineProperty(_assertThisInitialized(_this), "defaultData", []);
@@ -549,10 +559,11 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       var node = this.selection().node();
       var locale = new D3Locale(props.locale);
       var dateParse = d3.timeParse('%Y-%m-%d');
-      var dateFormat = locale.formatTime('%b %e');
+      var dateFormat = locale.formatTime(props.chart_formats.date);
       var dateFormatMatch = locale.formatTime('%Y-%m-%d');
-      var dateFormatTT = locale.formatTime('%B %e');
-      var numberFormatTT = locale.format(',');
+      var dateFormatTT = locale.formatTime(props.chart_formats.date_tooltip);
+      var numberFormatTT = locale.format(props.chart_formats.number_tooltip);
+      var numberFormat = locale.format(props.chart_formats.number);
       var dateList = [];
       var yRange;
       var allDates = [];
@@ -661,11 +672,14 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
 
           allDates.push(obj);
         });
+        allDates = allDates.sort(function (a, b) {
+          return d3.descending(a.date, b.date);
+        });
         allDates.forEach(function (d, i) {
           d.use_count = props.population ? d.count / props.population * 100000 : d.count;
           d.use_count = d.use_count < 0 ? 0 : d.use_count;
-          d.mean = d3.mean(allDates.slice(i - props.avg_days, i), function (d) {
-            return +d.count;
+          d.mean = d3.mean(allDates.slice(i, i + props.avg_days), function (d) {
+            return +d.count < 0 ? 0 : d.count;
           }); // avg calc
 
           d.use_mean = props.population ? d.mean / props.population * 100000 : d.mean;
@@ -792,7 +806,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             ticks = 3;
           }
 
-          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormatTT));
+          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat));
           g.select('.axis--y').selectAll('.tick').each(function (d) {
             if (d === 0) {
               this.remove();
