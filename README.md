@@ -94,6 +94,20 @@ myChart
       no_data: 'No reported {{ variable }}' // Chart says no reported cases if 
       // there are no reported cases for that place
     },
+
+    chart_formats: {
+      // Format number for axis
+      number: ',',
+
+      // Format number for tooltip
+      number_tooltip: ',',
+
+      // Date on tooltip
+      date_tooltip: '%B %e',
+
+      // Date format for the x axis
+      date: '%b %e',
+    },
   })
   .draw();
 
