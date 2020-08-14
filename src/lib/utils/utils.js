@@ -14,6 +14,11 @@ function getDates(startDate, stopDate) {
     return dateArray;
 }
 
+function addDays(startDate, days) {
+    var currentDate = startDate.addDays(days);
+    return currentDate;
+}
+
 function round(value, precision) {
     let multiplier = Math.pow(10, precision || 0);
     
@@ -21,4 +26,4 @@ function round(value, precision) {
     
 }
 
-export { getDates , round};
+export { getDates , round, addDays};

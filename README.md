@@ -75,6 +75,9 @@ myChart
 
     variable_name: 'cases', // What is this a chart of? Infections? Deaths? Tests?
     
+    // sets the default position of the tooltip
+    tooltip_default: 'top', // other options auto or bottom
+
     text: { // Here we pass all the text lines in the chart
 
       daily_numbers: 'Daily new {{ variable }}',

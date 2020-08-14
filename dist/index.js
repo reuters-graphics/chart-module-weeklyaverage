@@ -519,6 +519,8 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       variable_name: 'cases',
       date_range: [],
       left_y_axis: false,
+      tooltip_default: 'top',
+      // other options auto or bottom
       margin: {
         left: 20,
         right: 50,
@@ -620,10 +622,16 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           var l = [];
           var ns_threshold = 4;
 
-          if (coords[1] > size[1] / ns_threshold) {
+          if (props.tooltip_default == 'top') {
             l.push('s');
-          } else {
+          } else if (props.tooltip_default == 'bottom') {
             l.push('n');
+          } else {
+            if (coords[1] > size[1] / ns_threshold) {
+              l.push('s');
+            } else {
+              l.push('n');
+            }
           }
 
           if (coords[0] > size[0] / 2) {
@@ -717,27 +725,30 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         }).y0(scaleY(0)).curve(d3.curveStep);
 
         if (props.x_axis) {
-          g.appendSelect('g.axis--x').attr('class', 'axis--x axis').transition(transition).attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
+          g.appendSelect('g.axis--x').attr('class', 'axis--x axis').attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).transition(transition).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
         }
 
         if (props.bars) {
           var bars = g.appendSelect('g.bars-container').selectAll('.area').data([allDates]);
-          bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').merge(bars).transition(transition).style('fill', props.fill).attr('d', area);
+          bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').style('fill', props.fill).merge(bars).transition(transition).style('fill', props.fill).attr('d', area);
           bars.exit().transition(transition).remove();
           g.appendSelect('rect.highlight-bar');
           g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top - props.margin.bottom).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0).on('mousemove', function (d) {
             var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0])));
-            showTooltip(highlightDate);
+
+            if (highlightDate) {
+              showTooltip(highlightDate);
+            }
           }).on('mouseout', hideTooltip);
         } // avg line
 
 
         var avgLine = g.selectAll('.avg-line').data([allDates]);
-        avgLine.enter().append('path').attr('class', 'avg-line').merge(avgLine).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).style('pointer-events', 'none').attr('stroke-width', props.strokeWidth); // LABELS
+        avgLine.enter().append('path').attr('class', 'avg-line').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth).merge(avgLine).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).style('pointer-events', 'none').attr('stroke-width', props.strokeWidth); // LABELS
 
         if (props.labels) {
           var labelContainer = g.appendSelect('g.labels');
-          var useDay = 30;
+          var useDay = allDates.length - 30;
           var anchor = 'middle';
           var labelX = scaleX(allDates[useDay].date);
 
@@ -796,7 +807,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             ticks = 3;
           }
 
-          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').transition(transition).attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat));
+          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).transition(transition).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat));
           g.select('.axis--y').selectAll('.tick').each(function (d) {
             if (d === 0) {
               this.remove();

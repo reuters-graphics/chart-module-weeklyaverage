@@ -25,6 +25,7 @@ class WeeklyAverage extends ChartComponent {
     variable_name: 'cases',
     date_range: [],
     left_y_axis: false,
+    tooltip_default: 'top', // other options auto or bottom
     margin: {
       left: 20, right: 50, top: 10, bottom: 30,
     },
@@ -168,8 +169,8 @@ class WeeklyAverage extends ChartComponent {
       if (props.x_axis) {
         g.appendSelect('g.axis--x')
           .attr('class', 'axis--x axis')
-          .transition(transition)
           .attr('transform', `translate(0,${props.height - props.margin.bottom - props.margin.top})`)
+          .transition(transition)
           .call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
       }
 
@@ -183,6 +184,7 @@ class WeeklyAverage extends ChartComponent {
           .append('path')
           .attr('transform',`translate(${scaleX.bandwidth()/2},0)`)
           .attr('class', 'area')
+          .style('fill', props.fill)
           .merge(bars)
           .transition(transition)
           .style('fill', props.fill)
@@ -198,10 +200,12 @@ class WeeklyAverage extends ChartComponent {
           .append('rect')
           .attr('height', props.height - props.margin.top - props.margin.bottom)
           .attr('width', width - props.margin.left - props.margin.right+2)
-          .style('opacity',0)
+          .style('opacity', 0)
           .on('mousemove', function(d) {
             const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0]))))
-            showTooltip(highlightDate);
+            if (highlightDate) {
+              showTooltip(highlightDate);  
+            }
           })
           .on('mouseout', hideTooltip);
       }
@@ -213,6 +217,8 @@ class WeeklyAverage extends ChartComponent {
       avgLine.enter()
         .append('path')
         .attr('class', 'avg-line')
+        .attr('stroke', props.stroke)
+        .attr('stroke-width', props.strokeWidth)
         .merge(avgLine)
         .transition(transition)
         .attr('d', line)
@@ -224,7 +230,7 @@ class WeeklyAverage extends ChartComponent {
       // LABELS
       if (props.labels) {
         const labelContainer = g.appendSelect('g.labels');
-        const useDay = 30;
+        const useDay = allDates.length-30;
         let anchor = 'middle';
         const labelX = scaleX(allDates[useDay].date);
         if (labelX < ((width - props.margin.left - props.margin.right) * 0.18)) {
@@ -302,8 +308,8 @@ class WeeklyAverage extends ChartComponent {
 
         g.appendSelect('g.axis--y')
           .attr('class', 'axis--y axis')
-          .transition(transition)
           .attr('transform', `translate(${width - props.margin.right - props.margin.left},0)`)
+          .transition(transition)
           .call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat));
 
         g.select('.axis--y').selectAll('.tick').each(function(d) {
@@ -360,14 +366,22 @@ class WeeklyAverage extends ChartComponent {
       }
 
       function getTooltipType(coords, size) {
+
         const l = [];
         const ns_threshold = 4;
 
-        if (coords[1] > size[1] / ns_threshold) {
-          l.push('s');
+        if (props.tooltip_default=='top'){
+          l.push('s')
+        } else if (props.tooltip_default=='bottom'){
+          l.push('n')
         } else {
-          l.push('n');
-        }
+          if (coords[1] > size[1] / ns_threshold) {
+            l.push('s');
+          } else {
+            l.push('n');
+          }
+        } 
+       
 
         if (coords[0] > size[0] / 2) {
           l.push('e');
