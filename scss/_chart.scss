@@ -8,6 +8,9 @@ body{
 }
 
 #{$WeeklyAverage-container} {
+  .dummy-container{
+    cursor: crosshair;
+  }
   position: relative;
 
   /* Write your chart styles here */
