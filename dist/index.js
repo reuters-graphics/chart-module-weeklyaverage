@@ -4,8 +4,8 @@ function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'defau
 
 var d3 = require('d3');
 var merge = _interopDefault(require('lodash/merge'));
-var Mustache = _interopDefault(require('mustache'));
 var D3Locale = _interopDefault(require('@reuters-graphics/d3-locale'));
+var Mustache = _interopDefault(require('mustache'));
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -402,6 +402,10 @@ d3.selection.prototype.appendSelect = function (querySelector) {
   return selection;
 };
 
+d3.selection.prototype.transitionIf = function (conditional, transition) {
+  return conditional ? this.transition(transition) : this;
+};
+
 var ChartComponent = /*#__PURE__*/function () {
   function ChartComponent(selector, props, data) {
     _classCallCheck(this, ChartComponent);
@@ -545,7 +549,8 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         date_tooltip: '%B %e',
         // Date format for the x axis
         date: '%b %e'
-      }
+      },
+      transition_elements: true
     });
 
     _defineProperty(_assertThisInitialized(_this), "defaultData", []);
@@ -725,13 +730,13 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         }).y0(scaleY(0)).curve(d3.curveStep);
 
         if (props.x_axis) {
-          g.appendSelect('g.axis--x').attr('class', 'axis--x axis').attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).transition(transition).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
+          g.appendSelect('g.axis--x').attr('class', 'axis--x axis').attr('transform', "translate(0,".concat(props.height - props.margin.bottom - props.margin.top, ")")).transitionIf(props.transition_elements, transition).call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
         }
 
         if (props.bars) {
           var bars = g.appendSelect('g.bars-container').selectAll('.area').data([allDates]);
-          bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').style('fill', props.fill).merge(bars).transition(transition).style('fill', props.fill).attr('d', area);
-          bars.exit().transition(transition).remove();
+          bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').style('fill', props.fill).merge(bars).transitionIf(props.transition_elements, transition).style('fill', props.fill).attr('d', area);
+          bars.exit().transitionIf(props.transition_elements, transition).remove();
           g.appendSelect('rect.highlight-bar');
           g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top - props.margin.bottom).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0).on('mousemove', function (d) {
             var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0])));
@@ -744,7 +749,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
 
 
         var avgLine = g.selectAll('.avg-line').data([allDates]);
-        avgLine.enter().append('path').attr('class', 'avg-line').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth).merge(avgLine).transition(transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).style('pointer-events', 'none').attr('stroke-width', props.strokeWidth); // LABELS
+        avgLine.enter().append('path').attr('class', 'avg-line').attr('stroke', props.stroke).attr('stroke-width', props.strokeWidth).merge(avgLine).transitionIf(props.transition_elements, transition).attr('d', line).attr('fill', 'none').attr('stroke', props.stroke).style('pointer-events', 'none').attr('stroke-width', props.strokeWidth); // LABELS
 
         if (props.labels) {
           var labelContainer = g.appendSelect('g.labels');
@@ -807,7 +812,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             ticks = 3;
           }
 
-          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).transition(transition).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat));
+          g.appendSelect('g.axis--y').attr('class', 'axis--y axis').attr('transform', "translate(".concat(width - props.margin.right - props.margin.left, ",0)")).transitionIf(props.transition_elements, transition).call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat));
           g.select('.axis--y').selectAll('.tick').each(function (d) {
             if (d === 0) {
               this.remove();
@@ -834,7 +839,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           }).attr('transform', function (d) {
             return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
           });
-          annotationsContainer.merge(annotationsContainer).transition(transition).attr('transform', function (d) {
+          annotationsContainer.merge(annotationsContainer).transitionIf(props.transition_elements, transition).attr('transform', function (d) {
             return "translate(".concat(scaleX(dateParse(d.date)), ",0)");
           });
           annotation.appendSelect('line').attr('x1', 0).attr('x2', 0).attr('y2', function (d) {
