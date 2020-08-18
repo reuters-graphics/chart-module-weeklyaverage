@@ -1,9 +1,9 @@
 import { getDates, round } from './utils/utils';
 
 import ChartComponent from './base/ChartComponent';
+import D3Locale from '@reuters-graphics/d3-locale';
 import Mustache from 'mustache';
 import d3 from './utils/d3';
-import D3Locale from '@reuters-graphics/d3-locale';
 
 // import {round} from 'lodash'
 
@@ -51,6 +51,7 @@ class WeeklyAverage extends ChartComponent {
       // Date format for the x axis
       date: '%b %e',
     },
+    transition_elements: true,
   };
 
   defaultData = [];
@@ -170,7 +171,7 @@ class WeeklyAverage extends ChartComponent {
         g.appendSelect('g.axis--x')
           .attr('class', 'axis--x axis')
           .attr('transform', `translate(0,${props.height - props.margin.bottom - props.margin.top})`)
-          .transition(transition)
+          .transitionIf(props.transition_elements, transition)
           .call(d3.axisBottom(scaleX).tickValues([dateList[0], dateList[dateList.length - 1]]).tickFormat(dateFormat));
       }
 
@@ -182,16 +183,16 @@ class WeeklyAverage extends ChartComponent {
         bars
           .enter()
           .append('path')
-          .attr('transform',`translate(${scaleX.bandwidth()/2},0)`)
+          .attr('transform', `translate(${scaleX.bandwidth() / 2},0)`)
           .attr('class', 'area')
           .style('fill', props.fill)
           .merge(bars)
-          .transition(transition)
+          .transitionIf(props.transition_elements, transition)
           .style('fill', props.fill)
           .attr('d', area);
 
         bars.exit()
-          .transition(transition)
+          .transitionIf(props.transition_elements, transition)
           .remove();
 
         g.appendSelect('rect.highlight-bar');
@@ -199,12 +200,12 @@ class WeeklyAverage extends ChartComponent {
         g.appendSelect('g.dummy-container')
           .append('rect')
           .attr('height', props.height - props.margin.top - props.margin.bottom)
-          .attr('width', width - props.margin.left - props.margin.right+2)
+          .attr('width', width - props.margin.left - props.margin.right + 2)
           .style('opacity', 0)
           .on('mousemove', function(d) {
-            const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0]))))
+            const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0]))));
             if (highlightDate) {
-              showTooltip(highlightDate);  
+              showTooltip(highlightDate);
             }
           })
           .on('mouseout', hideTooltip);
@@ -220,17 +221,17 @@ class WeeklyAverage extends ChartComponent {
         .attr('stroke', props.stroke)
         .attr('stroke-width', props.strokeWidth)
         .merge(avgLine)
-        .transition(transition)
+        .transitionIf(props.transition_elements, transition)
         .attr('d', line)
         .attr('fill', 'none')
         .attr('stroke', props.stroke)
-        .style('pointer-events','none')
+        .style('pointer-events', 'none')
         .attr('stroke-width', props.strokeWidth);
 
       // LABELS
       if (props.labels) {
         const labelContainer = g.appendSelect('g.labels');
-        const useDay = allDates.length-30;
+        const useDay = allDates.length - 30;
         let anchor = 'middle';
         const labelX = scaleX(allDates[useDay].date);
         if (labelX < ((width - props.margin.left - props.margin.right) * 0.18)) {
@@ -280,7 +281,7 @@ class WeeklyAverage extends ChartComponent {
         const labelContainer = g.appendSelect('g.labels');
         const max = d3.max(allDates, d => d.use_mean);
         const maxVar = allDates.filter(d => d.use_mean === max)[0];
-        const maxPlotVal = round(maxVar.use_mean,0)
+        const maxPlotVal = round(maxVar.use_mean, 0);
         const newNosLabel = labelContainer.appendSelect('g.new-nos-label')
           .attr('transform', `translate(${scaleX(maxVar.date)},${scaleY(maxPlotVal)})`);
 
@@ -295,12 +296,11 @@ class WeeklyAverage extends ChartComponent {
           .attr('dx', -10)
           .attr('dy', 4)
           .text(numberFormatTT(maxPlotVal));
-
       } else {
         let ticks;
         if (yRange[1] === 2) {
           ticks = 2;
-        } else if (!props.bars || yRange[1] ===1 ) {
+        } else if (!props.bars || yRange[1] === 1) {
           ticks = 1;
         } else {
           ticks = 3;
@@ -309,7 +309,7 @@ class WeeklyAverage extends ChartComponent {
         g.appendSelect('g.axis--y')
           .attr('class', 'axis--y axis')
           .attr('transform', `translate(${width - props.margin.right - props.margin.left},0)`)
-          .transition(transition)
+          .transitionIf(props.transition_elements, transition)
           .call(d3.axisRight(scaleY).ticks(ticks).tickFormat(numberFormat));
 
         g.select('.axis--y').selectAll('.tick').each(function(d) {
@@ -333,7 +333,7 @@ class WeeklyAverage extends ChartComponent {
           .attr('width', scaleX.bandwidth())
           .attr('height', d => scaleY(0) - scaleY(obj.use_count))
           .attr('y', d => scaleY(obj.use_count))
-          .style('opacity',1)
+          .style('opacity', 1)
           .classed('active', true);
 
         const coords = [];
@@ -360,28 +360,26 @@ class WeeklyAverage extends ChartComponent {
         g.select('.highlight-bar')
           .attr('height', d => props.height)
           .attr('y', d => 0)
-          .style('opacity',0)
+          .style('opacity', 0)
           .classed('active', false);
         tooltipBox.classed('tooltip-active', false);
       }
 
       function getTooltipType(coords, size) {
-
         const l = [];
         const ns_threshold = 4;
 
-        if (props.tooltip_default=='top'){
-          l.push('s')
-        } else if (props.tooltip_default=='bottom'){
-          l.push('n')
+        if (props.tooltip_default == 'top') {
+          l.push('s');
+        } else if (props.tooltip_default == 'bottom') {
+          l.push('n');
         } else {
           if (coords[1] > size[1] / ns_threshold) {
             l.push('s');
           } else {
             l.push('n');
           }
-        } 
-       
+        }
 
         if (coords[0] > size[0] / 2) {
           l.push('e');
@@ -415,7 +413,7 @@ class WeeklyAverage extends ChartComponent {
           .attr('transform', d => `translate(${scaleX(dateParse(d.date))},0)`);
 
         annotationsContainer.merge(annotationsContainer)
-          .transition(transition)
+          .transitionIf(props.transition_elements, transition)
           .attr('transform', d => `translate(${scaleX(dateParse(d.date))},0)`);
 
         annotation.appendSelect('line')
@@ -457,10 +455,10 @@ class WeeklyAverage extends ChartComponent {
           .remove();
       }
     } else {
-      gOuter.select('.container').remove()
+      gOuter.select('.container').remove();
       this.selection()
         .appendSelect('p.no-data')
-        .text(Mustache.render(props.text.no_data, { variable: props.variable_name }))
+        .text(Mustache.render(props.text.no_data, { variable: props.variable_name }));
     }
 
     return this;

@@ -90,4 +90,8 @@ d3.selection.prototype.appendSelect = function(querySelector) {
   return selection;
 };
 
+d3.selection.prototype.transitionIf = function(conditional, transition) {
+  return conditional ? this.transition(transition) : this;
+};
+
 export default d3;
