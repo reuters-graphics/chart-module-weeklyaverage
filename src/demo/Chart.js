@@ -21,6 +21,7 @@ class ChartComponent extends React.Component {
       .props({
         // population: 370000000,
         labels: true,
+        y_min: 10,
         // x_axis: false,
         // bars: false,
         // left_y_axis: true,

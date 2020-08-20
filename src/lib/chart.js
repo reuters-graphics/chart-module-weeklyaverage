@@ -24,6 +24,7 @@ class WeeklyAverage extends ChartComponent {
     x_axis: true,
     variable_name: 'cases',
     date_range: [],
+    y_min: null,
     left_y_axis: false,
     tooltip_default: 'top', // other options auto or bottom
     margin: {
@@ -147,6 +148,10 @@ class WeeklyAverage extends ChartComponent {
         yRange = d3.extent(allDates, d => +d.use_count);
       } else {
         yRange = d3.extent(allDates, d => +d.use_mean);
+      }
+
+      if (props.y_min && yRange[1] < props.y_min) {
+        yRange[1] = props.y_min;
       }
 
       // y scale
