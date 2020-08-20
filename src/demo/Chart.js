@@ -43,10 +43,9 @@ class ChartComponent extends React.Component {
         //       'date':'2020-05-25',
         //       'text':'Hubei revises methodology',
         //       'class':'hide-desktop'}
-            // ]
+        // ]
       })
       .draw();
-
     // Add a listener to resize chart with the window.
     window.addEventListener('resize', this.resize);
   }
