@@ -592,12 +592,9 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       if (d3.sum(data, function (d) {
         return d.count;
       }) > 0) {
-        var showTooltip = function showTooltip(date) {
+        var showTooltip = function showTooltip(date, obj) {
           var TooltipText = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
           var formatFunction = props.population ? round : numberFormatTT;
-          var obj = allDates.filter(function (d) {
-            return dateFormatMatch(d.date) === date;
-          })[0];
           g.select('.highlight-bar').attr('x', scaleX(obj.date)).attr('width', scaleX.bandwidth()).attr('height', function (d) {
             return scaleY(0) - scaleY(obj.use_count);
           }).attr('y', function (d) {
@@ -745,9 +742,12 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           g.appendSelect('rect.highlight-bar');
           g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top - props.margin.bottom).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0).on('mousemove', function (d) {
             var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0])));
+            var obj = allDates.filter(function (d) {
+              return dateFormatMatch(d.date) === highlightDate;
+            })[0];
 
-            if (highlightDate) {
-              showTooltip(highlightDate);
+            if (highlightDate && obj) {
+              showTooltip(highlightDate, obj);
             }
           }).on('mouseout', hideTooltip);
         } // avg line
