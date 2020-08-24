@@ -595,6 +595,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         var showTooltip = function showTooltip(date, obj) {
           var TooltipText = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
           var formatFunction = props.population ? round : numberFormatTT;
+          g.select('.labels').style('opacity', 0);
           g.select('.highlight-bar').attr('x', scaleX(obj.date)).attr('width', scaleX.bandwidth()).attr('height', function (d) {
             return scaleY(0) - scaleY(obj.use_count);
           }).attr('y', function (d) {
@@ -613,6 +614,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
         };
 
         var hideTooltip = function hideTooltip() {
+          g.select('.labels').style('opacity', 1);
           g.select('.highlight-bar').attr('height', function (d) {
             return props.height;
           }).attr('y', function (d) {
@@ -740,7 +742,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').style('fill', props.fill).merge(bars).transitionIf(props.transition_elements, transition).style('fill', props.fill).attr('d', area);
           bars.exit().transitionIf(props.transition_elements, transition).remove();
           g.appendSelect('rect.highlight-bar');
-          g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top - props.margin.bottom).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0).on('mousemove', function (d) {
+          g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0).on('mousemove', function (d) {
             var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0])));
             var obj = allDates.filter(function (d) {
               return dateFormatMatch(d.date) === highlightDate;

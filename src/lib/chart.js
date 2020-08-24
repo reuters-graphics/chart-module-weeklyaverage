@@ -204,14 +204,14 @@ class WeeklyAverage extends ChartComponent {
 
         g.appendSelect('g.dummy-container')
           .append('rect')
-          .attr('height', props.height - props.margin.top - props.margin.bottom)
+          .attr('height', props.height - props.margin.top)
           .attr('width', width - props.margin.left - props.margin.right + 2)
           .style('opacity', 0)
           .on('mousemove', function(d) {
             const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0]))));
             const obj = allDates.filter(d => dateFormatMatch(d.date) === highlightDate)[0];
             if (highlightDate && obj) {
-              showTooltip(highlightDate,obj);
+              showTooltip(highlightDate, obj);
             }
           })
           .on('mouseout', hideTooltip);
@@ -333,6 +333,7 @@ class WeeklyAverage extends ChartComponent {
       function showTooltip(date, obj) {
         const TooltipText = props.population ? props.text.per_pop_tt : props.text.tooltip_suffix;
         const formatFunction = props.population ? round : numberFormatTT;
+        g.select('.labels').style('opacity', 0)
         g.select('.highlight-bar')
           .attr('x', scaleX(obj.date))
           .attr('width', scaleX.bandwidth())
@@ -362,6 +363,7 @@ class WeeklyAverage extends ChartComponent {
       }
 
       function hideTooltip() {
+        g.select('.labels').style('opacity', 1);
         g.select('.highlight-bar')
           .attr('height', d => props.height)
           .attr('y', d => 0)
