@@ -50,6 +50,7 @@ body{
 
   position: relative;
   .labels{
+    transition: opacity 0.1s ease-out;
   	line{
   		stroke: white;
   	}
@@ -120,6 +121,7 @@ body{
 }
 
 .custom-tooltip {
+  transition: top 0.2s ease-out;
   position: absolute;
   z-index: 9999;
   display: none;

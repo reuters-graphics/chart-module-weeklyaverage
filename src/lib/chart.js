@@ -4,6 +4,7 @@ import ChartComponent from './base/ChartComponent';
 import D3Locale from '@reuters-graphics/d3-locale';
 import Mustache from 'mustache';
 import d3 from './utils/d3';
+import { throttle } from 'lodash'
 
 // import {round} from 'lodash'
 
@@ -202,19 +203,35 @@ class WeeklyAverage extends ChartComponent {
 
         g.appendSelect('rect.highlight-bar');
 
-        g.appendSelect('g.dummy-container')
+        const touchBox = g.appendSelect('g.dummy-container')
           .append('rect')
           .attr('height', props.height - props.margin.top)
           .attr('width', width - props.margin.left - props.margin.right + 2)
-          .style('opacity', 0)
-          .on('mousemove', function(d) {
-            const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0]))));
-            const obj = allDates.filter(d => dateFormatMatch(d.date) === highlightDate)[0];
-            if (highlightDate && obj) {
-              showTooltip(highlightDate, obj);
-            }
-          })
-          .on('mouseout', hideTooltip);
+          .style('opacity', 0);
+
+        touchBox.on('mousemove', throttle(() => {
+          if (!d3.event) return;
+          const coordinates = d3.mouse(g.node());
+          const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(coordinates[0]))));
+          const obj = allDates.filter(d => dateFormatMatch(d.date) === highlightDate)[0];
+          if (highlightDate && obj) {
+            showTooltip(highlightDate, obj);
+          }
+        }, 50), true);
+
+        touchBox.on('touchstart touchmove', throttle(() => {
+          if (!d3.event) return;
+          const coordinates = d3.mouse(g.node());
+          const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(coordinates[0]))));
+          const obj = allDates.filter(d => dateFormatMatch(d.date) === highlightDate)[0];
+          if (highlightDate && obj) {
+            showTooltip(highlightDate, obj);
+          }
+        }, 50), true);
+
+        touchBox.on('mouseleave', hideTooltip);
+        touchBox.on('touchend touchcancel', hideTooltip);
+        touchBox.on('mouseout', hideTooltip);
       }
 
       // avg line
