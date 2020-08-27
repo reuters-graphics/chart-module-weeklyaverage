@@ -6,6 +6,7 @@ var d3 = require('d3');
 var merge = _interopDefault(require('lodash/merge'));
 var D3Locale = _interopDefault(require('@reuters-graphics/d3-locale'));
 var Mustache = _interopDefault(require('mustache'));
+var lodash = require('lodash');
 
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -742,8 +743,11 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').style('fill', props.fill).merge(bars).transitionIf(props.transition_elements, transition).style('fill', props.fill).attr('d', area);
           bars.exit().transitionIf(props.transition_elements, transition).remove();
           g.appendSelect('rect.highlight-bar');
-          g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0).on('mousemove', function (d) {
-            var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(d3.mouse(this)[0])));
+          var touchBox = g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0);
+          touchBox.on('mousemove', lodash.throttle(function () {
+            if (!d3.event) return;
+            var coordinates = d3.mouse(g.node());
+            var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(coordinates[0])));
             var obj = allDates.filter(function (d) {
               return dateFormatMatch(d.date) === highlightDate;
             })[0];
@@ -751,7 +755,22 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
             if (highlightDate && obj) {
               showTooltip(highlightDate, obj);
             }
-          }).on('mouseout', hideTooltip);
+          }, 50), true);
+          touchBox.on('touchstart touchmove', lodash.throttle(function () {
+            if (!d3.event) return;
+            var coordinates = d3.mouse(g.node());
+            var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(coordinates[0])));
+            var obj = allDates.filter(function (d) {
+              return dateFormatMatch(d.date) === highlightDate;
+            })[0];
+
+            if (highlightDate && obj) {
+              showTooltip(highlightDate, obj);
+            }
+          }, 50), true);
+          touchBox.on('mouseleave', hideTooltip);
+          touchBox.on('touchend touchcancel', hideTooltip);
+          touchBox.on('mouseout', hideTooltip);
         } // avg line
 
 
