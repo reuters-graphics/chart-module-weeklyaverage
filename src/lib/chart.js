@@ -282,21 +282,28 @@ class WeeklyAverage extends ChartComponent {
 
         if (props.bars) {
           const max = d3.max(allDates, d => d.use_count);
-          const maxVar = allDates.filter(d => d.use_count == max)[0];
+          const maxVar = allDates.filter(d => d.use_count === max)[0];
           const newNosLabel = labelContainer.appendSelect('g.new-nos-label')
-            .attr('transform', `translate(${scaleX(maxVar.date)},${scaleY(maxVar.use_count)})`);
-
-          newNosLabel.appendSelect('line')
-            .attr('x1', -10)
+          const labelLine = newNosLabel.appendSelect('line')
             .attr('x2', 0)
             .attr('y1', 10)
             .attr('y2', 10);
 
-          newNosLabel.appendSelect('text')
-            .style('text-anchor', 'end')
-            .attr('dx', -13)
+          const labelText = newNosLabel.appendSelect('text')
             .attr('dy', 12)
             .text(Mustache.render(props.text.daily_numbers, { variable: props.variable_name }));
+
+          if (scaleX(maxVar.date) < 0.4 * width) {
+            newNosLabel.attr('transform', `translate(${scaleX(maxVar.date)+scaleX.bandwidth()},${scaleY(maxVar.use_count)})`);
+            labelLine.attr('x1', 10);
+            labelText.style('text-anchor', 'start')
+              .attr('dx', 13);
+          } else {
+            newNosLabel.attr('transform', `translate(${scaleX(maxVar.date)},${scaleY(maxVar.use_count)})`);
+            labelLine.attr('x1', -10);
+            labelText.style('text-anchor', 'end')
+              .attr('dx', -13);
+          }
         }
       }
 

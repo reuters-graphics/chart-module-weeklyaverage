@@ -800,13 +800,23 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
               return d.use_count;
             });
             var maxVar = allDates.filter(function (d) {
-              return d.use_count == max;
+              return d.use_count === max;
             })[0];
-            var newNosLabel = labelContainer.appendSelect('g.new-nos-label').attr('transform', "translate(".concat(scaleX(maxVar.date), ",").concat(scaleY(maxVar.use_count), ")"));
-            newNosLabel.appendSelect('line').attr('x1', -10).attr('x2', 0).attr('y1', 10).attr('y2', 10);
-            newNosLabel.appendSelect('text').style('text-anchor', 'end').attr('dx', -13).attr('dy', 12).text(Mustache.render(props.text.daily_numbers, {
+            var newNosLabel = labelContainer.appendSelect('g.new-nos-label');
+            var labelLine = newNosLabel.appendSelect('line').attr('x2', 0).attr('y1', 10).attr('y2', 10);
+            var labelText = newNosLabel.appendSelect('text').attr('dy', 12).text(Mustache.render(props.text.daily_numbers, {
               variable: props.variable_name
             }));
+
+            if (scaleX(maxVar.date) < 0.4 * width) {
+              newNosLabel.attr('transform', "translate(".concat(scaleX(maxVar.date) + scaleX.bandwidth(), ",").concat(scaleY(maxVar.use_count), ")"));
+              labelLine.attr('x1', 10);
+              labelText.style('text-anchor', 'start').attr('dx', 13);
+            } else {
+              newNosLabel.attr('transform', "translate(".concat(scaleX(maxVar.date), ",").concat(scaleY(maxVar.use_count), ")"));
+              labelLine.attr('x1', -10);
+              labelText.style('text-anchor', 'end').attr('dx', -13);
+            }
           }
         }
 
