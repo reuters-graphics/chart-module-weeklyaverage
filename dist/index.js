@@ -743,7 +743,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           bars.enter().append('path').attr('transform', "translate(".concat(scaleX.bandwidth() / 2, ",0)")).attr('class', 'area').style('fill', props.fill).merge(bars).transitionIf(props.transition_elements, transition).style('fill', props.fill).attr('d', area);
           bars.exit().transitionIf(props.transition_elements, transition).remove();
           g.appendSelect('rect.highlight-bar');
-          var touchBox = g.appendSelect('g.dummy-container').append('rect').attr('height', props.height - props.margin.top).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0);
+          var touchBox = g.appendSelect('g.dummy-container').appendSelect('rect').attr('height', props.height - props.margin.top).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0);
           touchBox.on('mousemove', lodash.throttle(function () {
             if (!d3.event) return;
             var coordinates = d3.mouse(g.node());

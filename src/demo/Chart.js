@@ -3,6 +3,8 @@ import ChartContainer from './furniture/ChartContainer';
 import React from 'react';
 import debounce from 'lodash/debounce';
 import defaultData from './defaultData.json';
+import hungary from './hungary.json';
+
 
 class ChartComponent extends React.Component {
   state = { width: '200' };
@@ -46,6 +48,16 @@ class ChartComponent extends React.Component {
         // ]
       })
       .draw();
+
+    setTimeout(() => {
+      this.chart
+        .data(hungary)
+        .props({
+          labels: true,
+          y_min: 10,
+        })
+        .draw();
+    }, 2000);
     // Add a listener to resize chart with the window.
     window.addEventListener('resize', this.resize);
   }

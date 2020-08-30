@@ -204,7 +204,7 @@ class WeeklyAverage extends ChartComponent {
         g.appendSelect('rect.highlight-bar');
 
         const touchBox = g.appendSelect('g.dummy-container')
-          .append('rect')
+          .appendSelect('rect')
           .attr('height', props.height - props.margin.top)
           .attr('width', width - props.margin.left - props.margin.right + 2)
           .style('opacity', 0);
@@ -283,7 +283,7 @@ class WeeklyAverage extends ChartComponent {
         if (props.bars) {
           const max = d3.max(allDates, d => d.use_count);
           const maxVar = allDates.filter(d => d.use_count === max)[0];
-          const newNosLabel = labelContainer.appendSelect('g.new-nos-label')
+          const newNosLabel = labelContainer.appendSelect('g.new-nos-label');
           const labelLine = newNosLabel.appendSelect('line')
             .attr('x2', 0)
             .attr('y1', 10)
@@ -292,9 +292,9 @@ class WeeklyAverage extends ChartComponent {
           const labelText = newNosLabel.appendSelect('text')
             .attr('dy', 12)
             .text(Mustache.render(props.text.daily_numbers, { variable: props.variable_name }));
-
+            
           if (scaleX(maxVar.date) < 0.4 * width) {
-            newNosLabel.attr('transform', `translate(${scaleX(maxVar.date)+scaleX.bandwidth()},${scaleY(maxVar.use_count)})`);
+            newNosLabel.attr('transform', `translate(${scaleX(maxVar.date) + scaleX.bandwidth()},${scaleY(maxVar.use_count)})`);
             labelLine.attr('x1', 10);
             labelText.style('text-anchor', 'start')
               .attr('dx', 13);
