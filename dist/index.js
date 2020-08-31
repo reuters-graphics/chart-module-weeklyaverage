@@ -818,6 +818,8 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
               labelText.style('text-anchor', 'end').attr('dx', -13);
             }
           }
+        } else {
+          g.select('g.labels').remove();
         }
 
         if (props.left_y_axis) {

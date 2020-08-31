@@ -292,7 +292,7 @@ class WeeklyAverage extends ChartComponent {
           const labelText = newNosLabel.appendSelect('text')
             .attr('dy', 12)
             .text(Mustache.render(props.text.daily_numbers, { variable: props.variable_name }));
-            
+
           if (scaleX(maxVar.date) < 0.4 * width) {
             newNosLabel.attr('transform', `translate(${scaleX(maxVar.date) + scaleX.bandwidth()},${scaleY(maxVar.use_count)})`);
             labelLine.attr('x1', 10);
@@ -305,6 +305,9 @@ class WeeklyAverage extends ChartComponent {
               .attr('dx', -13);
           }
         }
+      } else {
+        g.select('g.labels')
+          .remove();
       }
 
       if (props.left_y_axis) {
