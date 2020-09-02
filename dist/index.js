@@ -744,7 +744,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
           bars.exit().transitionIf(props.transition_elements, transition).remove();
           g.appendSelect('rect.highlight-bar');
           var touchBox = g.appendSelect('g.dummy-container').appendSelect('rect').attr('height', props.height - props.margin.top).attr('width', width - props.margin.left - props.margin.right + 2).style('opacity', 0);
-          touchBox.on('mousemove', lodash.throttle(function () {
+          touchBox.on('mouseover mousemove touchenter touchstart touchmove', lodash.throttle(function () {
             if (!d3.event) return;
             var coordinates = d3.mouse(g.node());
             var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(coordinates[0])));
@@ -756,21 +756,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
               showTooltip(highlightDate, obj);
             }
           }, 50), true);
-          touchBox.on('touchstart touchmove', lodash.throttle(function () {
-            if (!d3.event) return;
-            var coordinates = d3.mouse(g.node());
-            var highlightDate = dateFormatMatch(new Date(scaleXHover.invert(coordinates[0])));
-            var obj = allDates.filter(function (d) {
-              return dateFormatMatch(d.date) === highlightDate;
-            })[0];
-
-            if (highlightDate && obj) {
-              showTooltip(highlightDate, obj);
-            }
-          }, 50), true);
-          touchBox.on('mouseleave', hideTooltip);
-          touchBox.on('touchend touchcancel', hideTooltip);
-          touchBox.on('mouseout', hideTooltip);
+          touchBox.on('mouseout touchleave touchcancel', hideTooltip);
         } // avg line
 
 

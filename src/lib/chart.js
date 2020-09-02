@@ -4,7 +4,7 @@ import ChartComponent from './base/ChartComponent';
 import D3Locale from '@reuters-graphics/d3-locale';
 import Mustache from 'mustache';
 import d3 from './utils/d3';
-import { throttle } from 'lodash'
+import { throttle } from 'lodash';
 
 // import {round} from 'lodash'
 
@@ -209,7 +209,7 @@ class WeeklyAverage extends ChartComponent {
           .attr('width', width - props.margin.left - props.margin.right + 2)
           .style('opacity', 0);
 
-        touchBox.on('mousemove', throttle(() => {
+        touchBox.on('mouseover mousemove touchenter touchstart touchmove', throttle(() => {
           if (!d3.event) return;
           const coordinates = d3.mouse(g.node());
           const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(coordinates[0]))));
@@ -219,19 +219,7 @@ class WeeklyAverage extends ChartComponent {
           }
         }, 50), true);
 
-        touchBox.on('touchstart touchmove', throttle(() => {
-          if (!d3.event) return;
-          const coordinates = d3.mouse(g.node());
-          const highlightDate = (dateFormatMatch(new Date(scaleXHover.invert(coordinates[0]))));
-          const obj = allDates.filter(d => dateFormatMatch(d.date) === highlightDate)[0];
-          if (highlightDate && obj) {
-            showTooltip(highlightDate, obj);
-          }
-        }, 50), true);
-
-        touchBox.on('mouseleave', hideTooltip);
-        touchBox.on('touchend touchcancel', hideTooltip);
-        touchBox.on('mouseout', hideTooltip);
+        touchBox.on('mouseout touchleave touchcancel', hideTooltip);
       }
 
       // avg line
