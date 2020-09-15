@@ -50,15 +50,6 @@ class ChartComponent extends React.Component {
       })
       .draw();
 
-    setTimeout(() => {
-      this.chart
-        .data(hungary)
-        .props({
-          labels: true,
-          y_min: 10,
-        })
-        .draw();
-    }, 2000);
     // Add a listener to resize chart with the window.
     window.addEventListener('resize', this.resize);
   }
