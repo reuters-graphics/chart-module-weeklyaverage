@@ -544,7 +544,7 @@ var WeeklyAverage = /*#__PURE__*/function (_ChartComponent) {
       locale: 'en',
       chart_formats: {
         // Format number for axis
-        number: ',',
+        number: '~s',
         // Format number for tooltip
         number_tooltip: ',',
         // Date on tooltip

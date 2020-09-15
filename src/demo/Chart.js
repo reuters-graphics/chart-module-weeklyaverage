@@ -24,6 +24,7 @@ class ChartComponent extends React.Component {
         // population: 370000000,
         labels: true,
         y_min: 10,
+        locale: 'ja',
         // x_axis: false,
         // bars: false,
         // left_y_axis: true,
